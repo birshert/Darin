@@ -1,7 +1,6 @@
-Ya, fellas
+# Winter holidays contest in chinese сharacters classification problem.
 
-My first try as a mashine
+Finished third with a score of 97.803% accuracy.
 
-Very good, strongly recommend
+[Watch my public kernel kernel](https://www.kaggle.com/birshert1/final-commit)
 
-[Watch my kernel](https://www.kaggle.com/birshert1/final-commit)
