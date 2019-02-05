@@ -4,10 +4,18 @@ Preparing for main work we were suplied with some knowledge in Mashine Learning 
 
 ### Lab1 - the beginning and some origins
 
+Linear regression, data validation, binary linear classification, gradient descent.
+
 ### Lab2 - some introduction to pytorch
 
-### Lab3 - added code from [ML competition](https://www.kaggle.com/c/2018-characters-classification) as a superlative of Lab-3
+Multilayer perceptron, linear multi-classification problem, universal approximation theorem, backpropagation, autoencoders.
 
-0.97732 score on private and 0.97945 on public - view my public [kernel](https://www.kaggle.com/birshert1/final-commit)
+### Lab3 - some introduction to convolutional neural networks
+
+Classic architecture, regularization, data augmentation, modern architectures.
+
+I added code from ML contest (check [this](https://github.com/birshert/Darin/tree/master/KaggleFight))
 
 ### Lab-4 - introduction to reinforcement learning
+
+Multi-armed bandit problem, markov decison process, SARSA and Q-learning.
