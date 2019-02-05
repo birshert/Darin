@@ -1,4 +1,6 @@
-# Winter holidays contest in chinese сharacters classification problem.
+## Winter holidays contest in chinese сharacters classification problem.
+
+---
 
 Finished third with a score of 97.803% accuracy.
 
