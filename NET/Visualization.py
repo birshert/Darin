@@ -56,9 +56,9 @@ class Visual:
     def draw_field(self):
         for i in range(1, 16):
             for j in range(1, 16):
-                if not self.field.get_node(i - 1, j - 1).is_empty():  # if there is a stone
-                    color = self.field.get_node(i - 1, j - 1).color()
-                    pygame.draw.circle(self.main_surface, color, (i * self.size, j * self.size), 10, 10)
+                if not self.field.get_node(i, j).is_empty():  # if there is a stone
+                    color = self.field.get_node(i, j).color()
+                    pygame.draw.circle(self.main_surface, color, ((i + 1) * self.size, (j + 1) * self.size), 10, 10)
         self.show_board()
 
     def move(self, move, is_black):
@@ -70,6 +70,7 @@ class Visual:
             stone = -1  # guess what (etihw)
 
         self.field.get_node(i, j).set_stone(stone)  # first place the stone
-        color = self.field.get_node(i - 1, j - 1).color()  # get it color
-        pygame.draw.circle(self.main_surface, color, (i * self.size, j * self.size), 10, 10)  # draw the stone
+        color = self.field.get_node(i, j).color()  # get it color
+        pygame.draw.circle(self.main_surface, color, ((i + 1) * self.size, (j + 1) * self.size), 10,
+                           10)  # draw the stone
         self.show_board()  # show the board and we're great

@@ -2,6 +2,7 @@ from Visualization import Visual
 from Functions import possible_moves
 from Players import RandomPlayer
 
+
 class Game:
     def __init__(self):
         self.vis = Visual()
@@ -16,10 +17,13 @@ class Game:
         self.curr_player = player1
         for _ in range(100):
             poss = possible_moves(self.field)
-            move = self.curr_player.move_(poss)
-            self.vis.move(move, self.turn)
+            position = self.curr_player.move_(poss)
+            self.vis.move(position, self.turn)
             self.turn = not self.turn
-            self.curr_player = (self.curr_player == player1) * player2 + (self.curr_player == player2) * player1
+            if self.curr_player == player1:
+                self.curr_player = player2
+            else:
+                self.curr_player = player1
 
 
 a = Game()
