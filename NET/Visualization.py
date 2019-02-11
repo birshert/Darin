@@ -66,7 +66,7 @@ class Visual:
         else:
             stone = -1  # guess what (etihw)
 
-        self.field.get_node(i, j).set_stone(stone)
-        color = self.field.get_node(i, j).color()
-        pygame.draw.circle(self.main_surface, color, (i * self.size, j * self.size), 10, 10)
-        self.show_board()
+        self.field.get_node(i, j).set_stone(stone)  # first place the stone
+        color = self.field.get_node(i, j).color()  # get it color
+        pygame.draw.circle(self.main_surface, color, (i * self.size, j * self.size), 10, 10)  # draw the stone
+        self.show_board()  # show the board and we're great
