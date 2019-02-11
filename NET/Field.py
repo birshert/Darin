@@ -33,7 +33,7 @@ class Field:
         return self.size
 
     def get_node(self, x, y):
-        return self.data[x - 1][y - 1]
+        return self.data[x][y]
 
     def get_field(self):
         return self.data

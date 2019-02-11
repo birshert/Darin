@@ -14,6 +14,9 @@ class Visual:
         self.field = Field(start=field)
         self.sleep = sleep  # time we sleep after each move
 
+    def get_field(self):
+        return self.field
+
     def reset_board(self):  # resetting the field
         self.field.reset()
 
@@ -53,8 +56,8 @@ class Visual:
     def draw_field(self):
         for i in range(1, 16):
             for j in range(1, 16):
-                if not self.field.get_node(i, j).is_empty():  # if there is a stone
-                    color = self.field.get_node(i, j).color()
+                if not self.field.get_node(i - 1, j - 1).is_empty():  # if there is a stone
+                    color = self.field.get_node(i - 1, j - 1).color()
                     pygame.draw.circle(self.main_surface, color, (i * self.size, j * self.size), 10, 10)
         self.show_board()
 
@@ -67,6 +70,6 @@ class Visual:
             stone = -1  # guess what (etihw)
 
         self.field.get_node(i, j).set_stone(stone)  # first place the stone
-        color = self.field.get_node(i, j).color()  # get it color
+        color = self.field.get_node(i - 1, j - 1).color()  # get it color
         pygame.draw.circle(self.main_surface, color, (i * self.size, j * self.size), 10, 10)  # draw the stone
         self.show_board()  # show the board and we're great
