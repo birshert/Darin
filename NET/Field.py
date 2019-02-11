@@ -7,6 +7,7 @@ class Node:
             self.stone = None
 
     def set_stone(self, stone):
+        self.empty = False
         self.stone = stone
 
     def get_stone(self):
