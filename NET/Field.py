@@ -34,7 +34,8 @@ class Field:
         return self.size
 
     def get_node(self, x, y):
-        return self.data[x][y]
+        if not(x < 0 or x > (self.size - 1) or y < 0 or y > (self.size - 1)):
+            return self.data[x][y]
 
     def get_field(self):
         return self.data
