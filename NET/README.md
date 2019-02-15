@@ -4,10 +4,3 @@
 
 Starting combining together knowledge and power to create the wonderfull one
 
-
-
-![](https://github.com/birshert/Darin/blob/master/NET/sample01.png)
-
----
-
-![](https://github.com/birshert/Darin/blob/master/NET/sample02.png)
