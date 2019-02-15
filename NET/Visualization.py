@@ -1,4 +1,4 @@
-import pygame
+import pygame, sys, os
 import time
 from Field import Field
 
@@ -26,9 +26,25 @@ class Visual:
 
         font = pygame.font.Font(None, self.size / 2)  # set some font for numbers
 
-        # horizontal lines and numbers,,
+        change = {1: 'a',
+                  2: 'b',
+                  3: 'c',
+                  4: 'd',
+                  5: 'e',
+                  6: 'f',
+                  7: 'g',
+                  8: 'h',
+                  9: 'j',
+                  10: 'k',
+                  11: 'l',
+                  12: 'm',
+                  13: 'n',
+                  14: 'o',
+                  15: 'p'}
+
+        # horizontal lines and numbers
         for i in range(self.field.get_size()):
-            text = font.render(str(i + 1), 2, (0, 0, 0))
+            text = font.render(change[i + 1], 2, (0, 0, 0))
             self.surface.blit(text, (self.size + i * self.size, self.size / 3))
             pygame.draw.line(self.surface, (0, 0, 0), (self.size + i * self.size, self.size),
                              (self.size + i * self.size, self.size * (self.nodes - 1)), 2)
@@ -93,7 +109,7 @@ class Visual:
                     stones.append(cur.get_stone())
                     poses.append([i - k + shift, j])
             if self.check_list(stones, stone):
-                self.highlight_winner(poses)
+                self.highlight_winner(poses, stone)
                 return True
 
         # horizontal check
@@ -106,7 +122,7 @@ class Visual:
                     stones.append(cur.get_stone())
                     poses.append([i, j - k + shift])
             if self.check_list(stones, stone):
-                self.highlight_winner(poses)
+                self.highlight_winner(poses, stone)
                 return True
 
         # diagonal check
@@ -119,7 +135,7 @@ class Visual:
                     stones.append(cur.get_stone())
                     poses.append([i - k + shift, j - k + shift])
             if self.check_list(stones, stone):
-                self.highlight_winner(poses)
+                self.highlight_winner(poses, stone)
                 return True
 
         return False
@@ -132,11 +148,11 @@ class Visual:
                 return False
         return True
 
-    def highlight_winner(self, poses):
-        color = (0, 255, 0)  # green is the victory color
+    def highlight_winner(self, poses, stone):
+        color = (stone == -1) * (255, 255, 255) + (stone == 1) * (0, 0, 0)
         for pos in poses:
             pos_ = ((pos[0] + 1) * self.size, (pos[1] + 1) * self.size)
-            pygame.draw.circle(self.surface, color, pos_, 10, 10)  # highlight the stone
+            pygame.draw.circle(self.surface, color, pos_, self.size / 10 * 3, self.size / 10 * 3)  # highlight the stone
         self.show_board()
 
     def pause(self):
