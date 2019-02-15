@@ -10,7 +10,12 @@ class Visual:
         self.nodes = 16  # 15 crossing lines == draw 14 cells and two on sides
         self.display = pygame.display.set_mode((self.size * self.nodes, self.size * self.nodes))
         pygame.display.set_caption("Renju game")
-        self.surface = None
+        self.surface = pygame.Surface((self.size * self.nodes, self.size * self.nodes))
+        self.start_color = (255, 255, 0)    # yellow for the victory
+        self.surface.fill(self.start_color)
+        self.display.blit(self.surface, (0, 0))
+        self.font = pygame.font.Font(None, self.size / 2)  # set some font for numbers etc.
+        pygame.display.flip()
         self.field = Field(start=field)
         self.sleep = sleep  # time we sleep after each move
 
@@ -20,11 +25,8 @@ class Visual:
     def reset_board(self):  # resetting the field
         self.field.reset()
 
-        self.surface = pygame.Surface((self.size * self.nodes, self.size * self.nodes))
         deck_color = (210, 180, 140)  # pretty nice color
         self.surface.fill(deck_color)  # fill the display with our nice color
-
-        font = pygame.font.Font(None, self.size / 2)  # set some font for numbers
 
         change = {1: 'a',
                   2: 'b',
@@ -44,14 +46,14 @@ class Visual:
 
         # horizontal lines and numbers
         for i in range(self.field.get_size()):
-            text = font.render(change[i + 1], 2, (0, 0, 0))
+            text = self.font.render(change[i + 1], 2, (0, 0, 0))
             self.surface.blit(text, (self.size + i * self.size, self.size / 3))
             pygame.draw.line(self.surface, (0, 0, 0), (self.size + i * self.size, self.size),
                              (self.size + i * self.size, self.size * (self.nodes - 1)), 2)
 
         # vertical lines and numbers
         for i in range(self.field.get_size()):
-            text = font.render(str(i + 1), 2, (0, 0, 0))
+            text = self.font.render(str(i + 1), 2, (0, 0, 0))
             self.surface.blit(text, (self.size / 3, self.size - 5 + i * self.size))
             pygame.draw.line(self.surface, (0, 0, 0), (self.size, self.size + i * self.size),
                              (self.size * (self.nodes - 1), self.size + i * self.size), 2)
@@ -168,11 +170,10 @@ class Visual:
                     exit()
 
     def end(self, winner=None):
-        font = pygame.font.Font(None, self.size / 2)
         if winner is None:
-            text = font.render('GAME ENDED, PRESS QUIT TO EXIT', 2, (0, 0, 0))
+            text = self.font.render('GAME ENDED, PRESS QUIT TO EXIT', 2, (0, 0, 0))
         else:
-            text = font.render('PLAYER {} WON! PRESS QUIT TO EXIT'.format(winner), 2, (0, 0, 0))
+            text = self.font.render('{} PLAYER WON! PRESS QUIT TO EXIT'.format(winner), 2, (0, 0, 0))
         self.surface.blit(text, (self.size * self.nodes / 2, self.size * (self.nodes - 1) + self.size / 2))
         self.show_board()
         while True:

@@ -1,3 +1,4 @@
+import pygame
 from Visualization import *
 from Players import *
 
@@ -5,12 +6,13 @@ from Players import *
 class Game:
     def __init__(self):
         self.vis = Visual()
-        self.vis.reset_board()
         self.field = self.vis.get_field()
         self.turn = True
         self.curr_player = None
+        self.running = False
 
-    def start_game(self, player1=None, player2=None):
+    def game_(self, player1=None, player2=None):
+        self.vis.reset_board()
         if player1 is None:
             player1 = HumanPlayer()
         if player2 is None:
@@ -31,7 +33,20 @@ class Game:
                 self.curr_player = player1
         self.vis.end()
 
+    def play_game(self, player1=None, player2=None):
+        self.running = True
+        while self.running:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:  # if you wanna quit - you're welcome
+                    pygame.display.quit()
+                    pygame.quit()
+                    exit()
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_g:
+                        self.game_(player1, player2)
+                        self.running = False
+
 
 a = Game()
 
-a.start_game()
+a.play_game()
