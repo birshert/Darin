@@ -11,13 +11,15 @@ class Visual:
         self.display = pygame.display.set_mode((self.size * self.nodes, self.size * self.nodes))
         pygame.display.set_caption("Renju game")
         self.surface = pygame.Surface((self.size * self.nodes, self.size * self.nodes))
-        self.start_color = (255, 255, 0)    # yellow for the victory
+        self.start_color = (184, 134, 11)  # dark golden rod for the victory
         self.surface.fill(self.start_color)
-        self.display.blit(self.surface, (0, 0))
         self.font = pygame.font.Font(None, self.size / 2)  # set some font for numbers etc.
-        pygame.display.flip()
+        hello = self.font.render('Hello stranger... Wanna play a game - press g', True, (0, 0, 0))
+        self.surface.blit(hello, (200, 350))
         self.field = Field(start=field)
         self.sleep = sleep  # time we sleep after each move
+        self.display.blit(self.surface, (0, 0))
+        pygame.display.flip()
 
     def get_field(self):
         return self.field
