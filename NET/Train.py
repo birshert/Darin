@@ -1,11 +1,12 @@
 from Net import *
-import torch
+from Dataset import *
+import torch.nn
+from torch.utils.data import DataLoader
+import torch.optim
 
 
-def train(model, train_loader, criterion1, criterion2, alpha, optimizer, scheduler):
+def train(model, train_loader, criterion1, criterion2, alpha, optimizer):
     model.train()
-
-    scheduler.step()
 
     batches = len(train_loader)
     percent = {int(batches * 1 / 5): 20,
@@ -19,14 +20,35 @@ def train(model, train_loader, criterion1, criterion2, alpha, optimizer, schedul
 
         optimizer.zero_grad()
 
-        output1, output2 = model(data)
-        target1, target2 = target
+        output1, _ = model(data)
+        target2 = target[1]
+        target2 = target2.type(torch.FloatTensor)
 
-        loss1 = criterion1(output1, target1)
-        loss2 = criterion2(output2, target2)
-        loss = loss1 + alpha * loss2
+        loss = loss1(output1, target2)
 
         loss.backward()
         optimizer.step()
 
     print("Training finished\n")
+
+
+data = make_dataset(10000)
+loader = DataLoader(data, 64, True)
+
+print("LOADER READY, MY LORD\n\n")
+
+path = "model1.1.pth"
+
+model = Net()
+model.load_state_dict(torch.load(path))
+
+optimizer = torch.optim.Adam(model.parameters(), lr=0.02)
+
+loss1 = torch.nn.MSELoss()
+loss2 = torch.nn.MSELoss()
+
+l = 0.1
+
+train(model, loader, loss1, loss2, l, optimizer)
+
+torch.save(model.state_dict(), path)

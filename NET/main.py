@@ -11,12 +11,12 @@ class Game:
         self.curr_player = None
         self.running = False
 
-    def game_(self, player1=None, player2=None):
+    def game_(self, player1=None, player2=None, path=None):
         self.vis.reset_board()
         if player1 is None:
-            player1 = HumanPlayer()
+            player1 = AI(path)
         if player2 is None:
-            player2 = RandomPlayer()
+            player2 = AI(path)
         self.curr_player = player1
         for num in range(15 * 15):
             position = self.curr_player.move_(self.field, num)
@@ -33,7 +33,7 @@ class Game:
                 self.curr_player = player1
         self.vis.end()
 
-    def play_game(self, player1=None, player2=None):
+    def play_game(self, player1=None, player2=None, path=None):
         self.running = True
         while self.running:
             for event in pygame.event.get():
@@ -43,10 +43,10 @@ class Game:
                     exit()
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_g:
-                        self.game_(player1, player2)
+                        self.game_(player1, player2, path)
                         self.running = False
 
 
 a = Game()
 
-a.play_game()
+a.play_game(path="model1.1.pth")

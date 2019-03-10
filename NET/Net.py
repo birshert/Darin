@@ -1,4 +1,5 @@
 import torch.nn as nn
+import torch.nn.functional as F
 
 import math
 
@@ -26,7 +27,7 @@ class Net(nn.Module):
 
         self.classifier = nn.Sequential(
             nn.Dropout(p=0.5),
-            nn.Linear(15 * 15 * 4, 512),
+            nn.Linear(576, 512),
             nn.BatchNorm1d(512),
             nn.ReLU(inplace=True),
             nn.Dropout(p=0.4),
@@ -58,11 +59,12 @@ class Net(nn.Module):
         nn.init.xavier_uniform_(self.classifier2.weight)
 
     def forward(self, x):
-        x = x.view(x.shape[0], 1, x.shape[1], x.shape[2])
+        x = x.type("torch.FloatTensor")
+        x = x.view(x.shape[0], 3, x.shape[1], x.shape[2])
         x = self.features(x)
         x = x.view(x.size(0), -1)
         x = self.classifier(x)
         x1 = self.classifier1(x)
         x2 = self.classifier2(x)
 
-        return x1, x2
+        return F.softmax(x1, dim=1), x2
