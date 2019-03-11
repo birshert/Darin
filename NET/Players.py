@@ -2,6 +2,7 @@ import numpy as np
 import pygame
 from Net import *
 import torch
+import torch.nn
 
 
 class RandomPlayer:
@@ -34,8 +35,8 @@ class HumanPlayer:
                         pos = [event.pos[0], event.pos[1]]
                         pos[0] -= 25
                         pos[1] -= 25
-                        pos[0] /= 50
-                        pos[1] /= 50
+                        pos[0] //= 50
+                        pos[1] //= 50
                         if field.get_node(pos[0], pos[1]).is_empty():
                             return pos
                         else:
@@ -49,7 +50,8 @@ class HumanPlayer:
 class AI:
     def __init__(self, path):
         self.model = Net()
-        self.model.load_state_dict(torch.load(path))
+        self.omega_lul_net = torch.nn.DataParallel(self.model)
+        self.omega_lul_net.load_state_dict(torch.load(path))
         self.model.eval()
         self.white_ = np.array([[-1 for _ in range(15)] for _ in range(15)])
         self.black_ = np.array([[1 for _ in range(15)] for _ in range(15)])
@@ -61,20 +63,12 @@ class AI:
         else:
             turn_ = self.white_
 
-        black_field = np.array([[0 for _ in range(15)] for _ in range(15)])
-        white_field = np.array([[0 for _ in range(15)] for _ in range(15)])
-        for i in range(15):
-            for j in range(15):
-                stone = field.get_node(i, j).get_stone()
-                if stone == 1:
-                    black_field[i][j] = stone
-                elif stone == -1:
-                    white_field[i][j] = stone
-        x = []
-        x.append(np.stack((black_field, white_field, turn_), axis=-1))
-        output1, _ = self.model(torch.tensor(x).type(torch.FloatTensor))
+        black_field = field.get_black()
+        white_field = field.get_white()
+        x = [np.stack((black_field, white_field, turn_), axis=-1)]
+        output1, _ = self.omega_lul_net(torch.tensor(x).type(torch.FloatTensor))
         while True:
             move = output1.data.max(1, keepdim=True)[1].item()
             if field.get_node(move // 15, move % 15).is_empty():
                 return [move // 15, move % 15]
-            output1[0][move] -= 5
+            output1[0][move] -= 1.01

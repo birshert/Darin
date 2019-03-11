@@ -37,9 +37,16 @@ class Net(nn.Module):
             nn.Dropout(p=0.4)
         )
 
-        self.classifier1 = nn.Linear(512, 15 * 15)
-        self.classifier2 = nn.Linear(512, 1)
-
+        self.classifier1 = nn.Sequential(
+            nn.Linear(512, 200),
+            nn.ReLU(inplace=True),
+            nn.Linear(200, 15 * 15)
+        )
+        self.classifier2 = nn.Sequential(
+            nn.Linear(512, 200),
+            nn.ReLU(inplace=True),
+            nn.Linear(200, 1)
+        )
         for m in self.features.children():
             if isinstance(m, nn.Conv2d):
                 n = m.kernel_size[0] * m.kernel_size[1] * m.out_channels
@@ -55,8 +62,13 @@ class Net(nn.Module):
                 m.weight.data.fill_(1)
                 m.bias.data.zero_()
 
-        nn.init.xavier_uniform_(self.classifier1.weight)
-        nn.init.xavier_uniform_(self.classifier2.weight)
+        for m in self.classifier1.children():
+            if isinstance(m, nn.Linear):
+                nn.init.xavier_uniform_(m.weight)
+
+        for m in self.classifier2.children():
+            if isinstance(m, nn.Linear):
+                nn.init.xavier_uniform_(m.weight)
 
     def forward(self, x):
         x = x.type("torch.FloatTensor")

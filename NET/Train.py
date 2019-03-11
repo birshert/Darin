@@ -1,11 +1,15 @@
-from Net import *
 from Dataset import *
+from Net import *
+import torch
 import torch.nn
-from torch.utils.data import DataLoader
 import torch.optim
+import torch.cuda
+from torch.utils.data import DataLoader
+import time
 
 
-def train(model, train_loader, criterion1, criterion2, alpha, optimizer):
+def train(model, train_loader, criterion1, optimizer):
+    start = time.clock()
     model.train()
 
     batches = len(train_loader)
@@ -16,39 +20,41 @@ def train(model, train_loader, criterion1, criterion2, alpha, optimizer):
                batches - 1: 100}
     for batch_idx, (data, target) in enumerate(train_loader):
         if batch_idx in percent:
-            print("{}% ready".format(percent[batch_idx]))
+            finish = time.clock()
+            print("{}% ready, time = {}".format(percent[batch_idx], finish - start))
 
         optimizer.zero_grad()
 
         output1, _ = model(data)
-        target2 = target[1]
-        target2 = target2.type(torch.FloatTensor)
+        target_ = target[1]
+        target_ = target_.type(torch.FloatTensor)
 
-        loss = loss1(output1, target2)
+        loss = criterion1(output1, target_)
 
         loss.backward()
         optimizer.step()
 
-    print("Training finished\n")
+    finish = time.clock()
+    print("Training finished, total time = {}\n".format(finish - start))
 
 
-data = make_dataset(10000)
-loader = DataLoader(data, 64, True)
+print("Available cudas {}\n".format(torch.cuda.device_count()))
 
-print("LOADER READY, MY LORD\n\n")
+id_ = 0
+path = "model{}.pth"
+model_ = Net()
+omega_lul_net = torch.nn.DataParallel(model_)  # default all devices
+# omega_lul_net.load_state_dict(torch.load(path.format(id_)))
+print("Model ready\n")
 
-path = "model1.1.pth"
+optim = torch.optim.Adam(omega_lul_net.parameters())
 
-model = Net()
-model.load_state_dict(torch.load(path))
+loss1 = torch.nn.L1Loss()
 
-optimizer = torch.optim.Adam(model.parameters(), lr=0.02)
+dataset = make_dataset(1000, 3000)
+loader = DataLoader(dataset, batch_size=64, shuffle=True, pin_memory=True, num_workers=torch.cuda.device_count())
 
-loss1 = torch.nn.MSELoss()
-loss2 = torch.nn.MSELoss()
+print("Dataset ready\n")
 
-l = 0.1
-
-train(model, loader, loss1, loss2, l, optimizer)
-
-torch.save(model.state_dict(), path)
+train(omega_lul_net, loader, loss1, optim)
+torch.save(omega_lul_net.state_dict(), path.format(id_ + 1))

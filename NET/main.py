@@ -1,4 +1,3 @@
-import pygame
 from Visualization import *
 from Players import *
 
@@ -11,12 +10,12 @@ class Game:
         self.curr_player = None
         self.running = False
 
-    def game_(self, player1=None, player2=None, path=None):
+    def game_(self, player1=None, player2=None, id_=None):
         self.vis.reset_board()
         if player1 is None:
-            player1 = AI(path)
+            player1 = HumanPlayer()
         if player2 is None:
-            player2 = AI(path)
+            player2 = AI("model{}.pth".format(id_))
         self.curr_player = player1
         for num in range(15 * 15):
             position = self.curr_player.move_(self.field, num)
@@ -33,7 +32,7 @@ class Game:
                 self.curr_player = player1
         self.vis.end()
 
-    def play_game(self, player1=None, player2=None, path=None):
+    def play_game(self, player1=None, player2=None, id_=None):
         self.running = True
         while self.running:
             for event in pygame.event.get():
@@ -43,10 +42,10 @@ class Game:
                     exit()
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_g:
-                        self.game_(player1, player2, path)
+                        self.game_(player1, player2, id_)
                         self.running = False
 
 
 a = Game()
 
-a.play_game(path="model1.1.pth")
+a.play_game(id_=1)

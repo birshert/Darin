@@ -13,7 +13,7 @@ class Visual:
         self.surface = pygame.Surface((self.size * self.nodes, self.size * self.nodes))
         self.start_color = (184, 134, 11)  # dark golden rod for the victory
         self.surface.fill(self.start_color)
-        self.font = pygame.font.Font(None, int(self.size / 2)) # set some font for numbers etc.
+        self.font = pygame.font.Font(None, self.size // 2)  # set some font for numbers etc.
         hello = self.font.render('Hello stranger... Wanna play a game - press g', True, (0, 0, 0))
         self.surface.blit(hello, (200, 350))
         self.field = Field(start=field)
@@ -49,14 +49,14 @@ class Visual:
         # horizontal lines and numbers
         for i in range(self.field.get_size()):
             text = self.font.render(change[i + 1], 2, (0, 0, 0))
-            self.surface.blit(text, (self.size + i * self.size, self.size / 3))
+            self.surface.blit(text, (self.size + i * self.size, self.size // 3))
             pygame.draw.line(self.surface, (0, 0, 0), (self.size + i * self.size, self.size),
                              (self.size + i * self.size, self.size * (self.nodes - 1)), 2)
 
         # vertical lines and numbers
         for i in range(self.field.get_size()):
             text = self.font.render(str(i + 1), 2, (0, 0, 0))
-            self.surface.blit(text, (self.size / 3, self.size - 5 + i * self.size))
+            self.surface.blit(text, (self.size // 3, self.size - 5 + i * self.size))
             pygame.draw.line(self.surface, (0, 0, 0), (self.size, self.size + i * self.size),
                              (self.size * (self.nodes - 1), self.size + i * self.size), 2)
 
@@ -92,7 +92,7 @@ class Visual:
         else:
             stone = -1  # guess what (etihw)
 
-        self.field.get_node(i, j).set_stone(stone)  # first place the stone
+        self.field.make_move(i, j, stone)  # first place the stone
         color = self.field.get_node(i, j).color()  # get it color
         pygame.draw.circle(self.surface, color, ((i + 1) * self.size, (j + 1) * self.size), 10, 10)  # draw the stone
         self.show_board()  # show the board and we're great
@@ -156,7 +156,8 @@ class Visual:
         color = (stone == -1) * (255, 255, 255) + (stone == 1) * (0, 0, 0)
         for pos in poses:
             pos_ = ((pos[0] + 1) * self.size, (pos[1] + 1) * self.size)
-            pygame.draw.circle(self.surface, color, pos_, int(self.size / 10 * 3), int(self.size / 10 * 3))  # highlight the stone
+            pygame.draw.circle(self.surface, color, pos_, self.size // 10 * 3,
+                               self.size // 10 * 3)  # highlight the stone
         self.show_board()
 
     def pause(self):
@@ -176,7 +177,7 @@ class Visual:
             text = self.font.render('GAME ENDED, PRESS QUIT TO EXIT', 2, (0, 0, 0))
         else:
             text = self.font.render('{} PLAYER WON! PRESS QUIT TO EXIT'.format(winner), 2, (0, 0, 0))
-        self.surface.blit(text, (int(self.size * self.nodes / 2), int(self.size * (self.nodes - 1) + self.size / 2)))
+        self.surface.blit(text, (self.size * self.nodes // 2, self.size * (self.nodes - 1) + self.size // 2))
         self.show_board()
         while True:
             for event in pygame.event.get():

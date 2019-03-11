@@ -22,7 +22,7 @@ class Dataset_renju(Dataset):
 
     def __getitem__(self, item):
         elem = self.X[item]
-        if (self.transforms is not None):
+        if self.transforms is not None:
             elem = self.transforms(self.X[item])
         if self.train:
             return elem, self.Y[item]
@@ -30,7 +30,7 @@ class Dataset_renju(Dataset):
             return elem
 
 
-def make_dataset(size):
-    x, y = parse(0, size)
+def make_dataset(count1, count2):
+    x, y = parse(count1, count2)
     dataset = Dataset_renju(x, y)
     return dataset
