@@ -17,8 +17,9 @@ class Game:
         if player2 is None:
             player2 = AI("model{}.pth".format(id_))
         self.curr_player = player1
+        self.turn = True
         for num in range(15 * 15):
-            position = self.curr_player.move_(self.field, num)
+            position = self.curr_player.move_(self.field, self.turn)
             winner, self.field = self.vis.move(position, self.turn)
             if winner:
                 if self.curr_player == player1:
@@ -48,4 +49,4 @@ class Game:
 
 a = Game()
 
-a.play_game(id_=6)
+a.play_game(id_=45)

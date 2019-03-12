@@ -27,11 +27,11 @@ def parse(count1, count2):
 
     x = []
     y = []
-    black = torch.tensor(1)
-    white = torch.tensor(-1)
-    black_ = np.array([[1 for _ in range(15)] for _ in range(15)])
-    white_ = np.array([[-1 for _ in range(15)] for _ in range(15)])
-    empty = torch.from_numpy(np.array([0 for _ in range(15 * 15)])).type(torch.FloatTensor)
+    black = torch.tensor(1.0).type(torch.FloatTensor)
+    white = torch.tensor(-1.0).type(torch.FloatTensor)
+    black_ = np.array([[1.0 for _ in range(15)] for _ in range(15)])
+    white_ = np.array([[-1.0 for _ in range(15)] for _ in range(15)])
+    empty = torch.from_numpy(np.array([0.0 for _ in range(15 * 15)])).type(torch.FloatTensor)
 
     for pos, line in enumerate(file):
         if pos < count1:

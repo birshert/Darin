@@ -30,22 +30,33 @@ class Net(nn.Module):
             nn.Linear(576, 512),
             nn.BatchNorm1d(512),
             nn.ReLU(inplace=True),
-            nn.Dropout(p=0.4),
+            nn.Dropout(p=0.5),
             nn.Linear(512, 512),
             nn.BatchNorm1d(512),
             nn.ReLU(inplace=True),
-            nn.Dropout(p=0.4)
+            nn.Dropout(p=0.5)
         )
 
         self.classifier1 = nn.Sequential(
+            nn.Dropout(p=0.5),
             nn.Linear(512, 200),
+            nn.BatchNorm1d(200),
             nn.ReLU(inplace=True),
-            nn.Linear(200, 15 * 15)
+            nn.Dropout(p=0.5),
+            nn.Linear(200, 15 * 15),
+            nn.BatchNorm1d(15 * 15),
+            nn.ReLU(inplace=True),
+            nn.Dropout(p=0.5)
         )
         self.classifier2 = nn.Sequential(
+            nn.Dropout(p=0.5),
             nn.Linear(512, 200),
+            nn.BatchNorm1d(200),
             nn.ReLU(inplace=True),
-            nn.Linear(200, 1)
+            nn.Dropout(p=0.5),
+            nn.Linear(200, 1),
+            nn.ReLU(inplace=True),
+            nn.Dropout(p=0.5)
         )
         for m in self.features.children():
             if isinstance(m, nn.Conv2d):

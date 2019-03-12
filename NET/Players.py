@@ -50,14 +50,15 @@ class HumanPlayer:
 class AI:
     def __init__(self, path):
         self.model = Net()
-        self.omega_lul_net = torch.nn.DataParallel(self.model)
-        self.omega_lul_net.load_state_dict(torch.load(path))
+        self.model = torch.nn.DataParallel(self.model)
+        # self.model.load_state_dict(torch.load(path, map_location=lambda storage, loc: storage))
         self.model.eval()
         self.white_ = np.array([[-1 for _ in range(15)] for _ in range(15)])
         self.black_ = np.array([[1 for _ in range(15)] for _ in range(15)])
         self.empty = np.array([0 for _ in range(15 * 15)])
 
     def move_(self, field, turn):
+        turn = not turn
         if turn:
             turn_ = self.black_
         else:
@@ -66,7 +67,8 @@ class AI:
         black_field = field.get_black()
         white_field = field.get_white()
         x = [np.stack((black_field, white_field, turn_), axis=-1)]
-        output1, _ = self.omega_lul_net(torch.tensor(x).type(torch.FloatTensor))
+        output1, _ = self.model(torch.tensor(x).type(torch.FloatTensor))
+        print(output1)
         while True:
             move = output1.data.max(1, keepdim=True)[1].item()
             if field.get_node(move // 15, move % 15).is_empty():
