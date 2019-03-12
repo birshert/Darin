@@ -71,7 +71,6 @@ class Net(nn.Module):
                 nn.init.xavier_uniform_(m.weight)
 
     def forward(self, x):
-        x = x.type("torch.FloatTensor")
         x = x.view(x.shape[0], 3, x.shape[1], x.shape[2])
         x = self.features(x)
         x = x.view(x.size(0), -1)
