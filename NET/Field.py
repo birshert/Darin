@@ -1,3 +1,7 @@
+import numpy as np
+from copy import deepcopy
+
+
 class Node:
     def __init__(self, empty=True, stone=None):
         self.empty = empty
@@ -29,6 +33,7 @@ class Field:
         self.start = start
         self.size = 15
         self.data = start
+        self.field = np.array([[0.0 for _ in range(15)] for _ in range(15)])
         self.white = [[0 for _ in range(15)] for _ in range(15)]
         self.black = [[0 for _ in range(15)] for _ in range(15)]
         for i in range(15):
@@ -53,18 +58,22 @@ class Field:
             else:
                 self.data[x][y].set_stone(stone)
                 if stone == 1:
-                    self.black[x][y] = stone
+                    self.black[x][y] = 1.0
                 elif stone == -1:
-                    self.white[x][y] = stone
+                    self.white[x][y] = 1.0
+                self.field[x][y] = stone * 1.0
 
     def get_field(self):
-        return self.data
+        return deepcopy(self.data)
+
+    def field_(self):
+        return deepcopy(self.field)
 
     def reset(self):
         self.data = self.start
 
     def get_white(self):
-        return self.white
+        return deepcopy(self.white)
 
     def get_black(self):
-        return self.black
+        return deepcopy(self.black)

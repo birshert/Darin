@@ -3,6 +3,8 @@ import pygame
 from Net import *
 import torch
 import torch.nn
+import torch.nn.functional as F
+from copy import deepcopy
 
 
 class RandomPlayer:
@@ -48,29 +50,20 @@ class HumanPlayer:
 
 
 class AI:
-    def __init__(self, path):
+    def __init__(self, number):
         self.model = Net()
         self.model = torch.nn.DataParallel(self.model)
-        # self.model.load_state_dict(torch.load(path, map_location=lambda storage, loc: storage))
+        self.model.load_state_dict(torch.load("model{}.pth".format(number), map_location=lambda storage, loc: storage))
         self.model.eval()
-        self.white_ = np.array([[-1 for _ in range(15)] for _ in range(15)])
-        self.black_ = np.array([[1 for _ in range(15)] for _ in range(15)])
-        self.empty = np.array([0 for _ in range(15 * 15)])
 
     def move_(self, field, turn):
-        turn = not turn
-        if turn:
-            turn_ = self.black_
-        else:
-            turn_ = self.white_
-
-        black_field = field.get_black()
-        white_field = field.get_white()
-        x = [np.stack((black_field, white_field, turn_), axis=-1)]
-        output1, _ = self.model(torch.tensor(x).type(torch.FloatTensor))
-        print(output1)
+        field_ = deepcopy(field.field_())
+        print(field_)
+        input_ = deepcopy(torch.stack([torch.from_numpy(field_).type(torch.FloatTensor)]))
+        output = F.softmax(self.model(input_), dim=1)
         while True:
-            move = output1.data.max(1, keepdim=True)[1].item()
+            move = output.data.max(1, keepdim=True)[1]
+            print(move)
             if field.get_node(move // 15, move % 15).is_empty():
-                return [move // 15, move % 15]
-            output1[0][move] -= 1.01
+                return move // 15, move % 15
+            output[0][move] -= 1

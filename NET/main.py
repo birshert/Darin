@@ -13,9 +13,9 @@ class Game:
     def game_(self, player1=None, player2=None, id_=None):
         self.vis.reset_board()
         if player1 is None:
-            player1 = AI("model{}.pth".format(id_))
+            player1 = AI(id_)
         if player2 is None:
-            player2 = AI("model{}.pth".format(id_))
+            player2 = HumanPlayer()
         self.curr_player = player1
         self.turn = True
         for num in range(15 * 15):
@@ -49,4 +49,4 @@ class Game:
 
 a = Game()
 
-a.play_game(id_=45)
+a.play_game(id_=228)

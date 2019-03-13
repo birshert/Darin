@@ -25,13 +25,9 @@ def parse(count1, count2):
               'o': 14,
               'p': 15}
 
-    x = []
-    y = []
-    black = torch.tensor(1.0).type(torch.FloatTensor)
-    white = torch.tensor(-1.0).type(torch.FloatTensor)
-    black_ = np.array([[1.0 for _ in range(15)] for _ in range(15)])
-    white_ = np.array([[-1.0 for _ in range(15)] for _ in range(15)])
-    empty = torch.from_numpy(np.array([0.0 for _ in range(15 * 15)])).type(torch.FloatTensor)
+    data_x = []
+    data_y = []
+    empty_field = np.array([[0.0 for _ in range(15)] for _ in range(15)])
 
     for pos, line in enumerate(file):
         if pos < count1:
@@ -40,44 +36,22 @@ def parse(count1, count2):
             break
 
         data = line.split()
-        black_field = np.array([[0 for _ in range(15)] for _ in range(15)])
-        white_field = np.array([[0 for _ in range(15)] for _ in range(15)])
-        if data[0] == 'black':
-            turn_black = True
-            for i in range(1, len(data) - 1):
-                move = [change[data[i][0]], int(data[i][1])]
+        field = deepcopy(empty_field)
+        if data[0] != 'draw':
+            stone = 1.0
+            for i in range(0, len(data) - 1):
+                if i != 0:
+                    move = [change[data[i][0]] - 1, int(data[i][1]) - 1]
+                    field[move[0]][move[1]] = stone
 
-                next_move = [change[data[i + 1][0]], int(data[i + 1][1])]
-                move_field = deepcopy(empty)
-                move_field[(next_move[0] - 1) * 15 + (next_move[1] - 1)] = 1.0
+                data_x.append(deepcopy(field))
 
-                if turn_black:
-                    black_field[move[0] - 1][move[1] - 1] = black
-                else:
-                    white_field[move[0] - 1][move[1] - 1] = white
+                next_move = [change[data[i + 1][0]] - 1, int(data[i + 1][1]) - 1]
 
-                turn_black = not turn_black
-                turn = turn_black * black_ + (not turn_black) * white_
-                x.append(torch.from_numpy(np.stack((black_field, white_field, turn), axis=-1)))
-                y.append([black, move_field])
+                data_y.append(deepcopy((next_move[0]) * 15 + next_move[1]))
+                stone *= -1.0
 
-        elif data[0] == 'white':
-            turn_black = True
-            for i in range(1, len(data) - 1):
-                move = [change[data[i][0]], int(data[i][1])]
-
-                next_move = [change[data[i + 1][0]], int(data[i + 1][1])]
-                move_field = deepcopy(empty)
-                move_field[(next_move[0] - 1) * 15 + (next_move[1] - 1)] = 1.0
-
-                if turn_black:
-                    black_field[move[0] - 1][move[1] - 1] = black
-                else:
-                    white_field[move[0] - 1][move[1] - 1] = white
-
-                turn_black = not turn_black
-                turn = turn_black * black_ + (not turn_black) * white_
-                x.append(torch.from_numpy(np.stack((black_field, white_field, turn), axis=-1)))
-                y.append([white, move_field])
+    x = torch.stack([torch.from_numpy(i).type(torch.FloatTensor) for i in data_x])
+    y = torch.stack([torch.tensor(i) for i in data_y])
 
     return x, y
