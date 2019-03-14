@@ -9,10 +9,10 @@ class Net(nn.Module):
         super(Net, self).__init__()
 
         self.features = nn.Sequential(
-            nn.Conv2d(1, 32, kernel_size=5, stride=1, padding=1),
+            nn.Conv2d(7, 32, kernel_size=5, padding=2),
             nn.BatchNorm2d(32),
             nn.ReLU(inplace=True),
-            nn.Conv2d(32, 32, kernel_size=3, stride=1, padding=1),
+            nn.Conv2d(32, 32, kernel_size=3, padding=2),
             nn.BatchNorm2d(32),
             nn.ReLU(inplace=True),
             nn.MaxPool2d(kernel_size=2, stride=2),
@@ -25,14 +25,8 @@ class Net(nn.Module):
             nn.MaxPool2d(kernel_size=2, stride=2)
         )
 
-        self.classifier = nn.Sequential(
-            nn.Linear(576, 512),
-            nn.BatchNorm1d(512),
-            nn.ReLU(inplace=True),
-            nn.Linear(512, 512),
-            nn.BatchNorm1d(512),
-            nn.ReLU(inplace=True),
-            nn.Linear(512, 15 * 15)
+        self.classifier1 = nn.Sequential(
+            nn.Linear(1024, 15 * 15)
         )
 
         for m in self.features.children():
@@ -43,7 +37,7 @@ class Net(nn.Module):
                 m.weight.data.fill_(1)
                 m.bias.data.zero_()
 
-        for m in self.classifier.children():
+        for m in self.classifier1.children():
             if isinstance(m, nn.Linear):
                 nn.init.xavier_uniform_(m.weight)
             elif isinstance(m, nn.BatchNorm1d):
@@ -51,9 +45,8 @@ class Net(nn.Module):
                 m.bias.data.zero_()
 
     def forward(self, x):
-        x = x.view(x.shape[0], 1, x.shape[1], x.shape[2])
         x = self.features(x)
         x = x.view(x.size(0), -1)
-        x = self.classifier(x)
+        x = self.classifier1(x)
 
         return x
