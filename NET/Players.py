@@ -52,18 +52,38 @@ class HumanPlayer:
 class AI:
     def __init__(self, number):
         self.model = Net()
-        self.model = torch.nn.DataParallel(self.model)
+        # self.model = torch.nn.DataParallel(self.model)
         self.model.load_state_dict(torch.load("model{}.pth".format(number), map_location=lambda storage, loc: storage))
         self.model.eval()
+        self.empty = np.array([[0.0 for _ in range(15)] for _ in range(15)])
+        self.white_turn = np.array([[-1.0 for _ in range(15)] for _ in range(15)])
+        self.black_turn = np.array([[+1.0 for _ in range(15)] for _ in range(15)])
+        self.past1_black = deepcopy(self.empty)
+        self.past1_white = deepcopy(self.empty)
+        self.past2_black = deepcopy(self.empty)
+        self.past2_white = deepcopy(self.empty)
+        self.count_turns = 0
 
     def move_(self, field, turn):
-        field_ = deepcopy(field.field_())
-        print(field_)
-        input_ = deepcopy(torch.stack([torch.from_numpy(field_).type(torch.FloatTensor)]))
+        black_field = deepcopy(field.get_black())
+        white_field = deepcopy(field.get_white())
+        turn_ = self.black_turn * turn + (not turn) * self.white_turn
+        input_ = deepcopy(np.stack(
+            (black_field, white_field, turn_, self.past1_black, self.past1_white, self.past2_black, self.past2_white),
+            axis=0))
+        input_ = torch.stack([torch.from_numpy(input_).type(torch.FloatTensor)])
         output = F.softmax(self.model(input_), dim=1)
         while True:
             move = output.data.max(1, keepdim=True)[1]
-            print(move)
             if field.get_node(move // 15, move % 15).is_empty():
+                if self.count_turns > 1:
+                    self.past1_black = deepcopy(black_field)
+                    self.past1_white = deepcopy(white_field)
+                if self.count_turns > 2:
+                    self.past2_black = deepcopy(self.past1_black)
+                    self.past2_white = deepcopy(self.past1_white)
+                    self.past1_black = deepcopy(black_field)
+                    self.past1_white = deepcopy(white_field)
+                self.count_turns += 1
                 return move // 15, move % 15
             output[0][move] -= 1

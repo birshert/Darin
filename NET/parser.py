@@ -68,7 +68,7 @@ def parse(count1, count2):
                     else:
                         past2_white[move[0]][move[1]] = stone
 
-                if stone > 0:
+                if stone < 0:
                     turn = deepcopy(white_turn)
                 else:
                     turn = deepcopy(black_turn)

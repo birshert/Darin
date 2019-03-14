@@ -34,8 +34,8 @@ class Field:
         self.size = 15
         self.data = start
         self.field = np.array([[0.0 for _ in range(15)] for _ in range(15)])
-        self.white = [[0 for _ in range(15)] for _ in range(15)]
-        self.black = [[0 for _ in range(15)] for _ in range(15)]
+        self.white = [[0.0 for _ in range(15)] for _ in range(15)]
+        self.black = [[0.0 for _ in range(15)] for _ in range(15)]
         for i in range(15):
             for j in range(15):
                 if not start[i][j].is_empty():
@@ -60,8 +60,8 @@ class Field:
                 if stone == 1:
                     self.black[x][y] = 1.0
                 elif stone == -1:
-                    self.white[x][y] = 1.0
-                self.field[x][y] = stone * 1.0
+                    self.white[x][y] = -1.0
+                self.field[x][y] = stone
 
     def get_field(self):
         return deepcopy(self.data)

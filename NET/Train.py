@@ -88,7 +88,7 @@ def main(epoches_num, sub_epoches_num):
         print("Start epoch {}".format(number))
 
         if os.path.isfile(path.format(number)):
-            model_.load_state_dict(torch.load(path.format(number), map_location=lambda storage, loc: storage))
+            model_.load_state_dict(torch.load('total' + path.format(number - 1), map_location=lambda storage, loc: storage))
 
         model_ = model_.to(device)
 
@@ -96,18 +96,20 @@ def main(epoches_num, sub_epoches_num):
 
         start = time.clock()
 
-        dataset = make_dataset(10 * number, 100000 * (number + 1))
+        dataset = make_dataset(20 * number, 20 * (number + 1))
 
         print("Dataset ready, size {}, time {}\n".format(len(dataset), time.clock() - start))
 
         start = time.clock()
 
-        loader = DataLoader(dataset, batch_size=2048, shuffle=True, pin_memory=True,
+        loader = DataLoader(dataset, batch_size=2048, shuffle=True,
                             num_workers=torch.cuda.device_count() * 4, drop_last=False)
 
         print("DataLoader ready, time {}\n".format(time.clock() - start))
 
         del dataset
+
+        torch.cuda.empty_cache()
 
         loss1 = torch.nn.CrossEntropyLoss()
         if torch.cuda.is_available():
@@ -124,6 +126,8 @@ def main(epoches_num, sub_epoches_num):
             test(model_, loader, device)
 
         del loader
+
+        torch.cuda.empty_cache()
 
         gc.collect()
 

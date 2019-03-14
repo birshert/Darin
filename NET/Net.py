@@ -1,5 +1,4 @@
 import torch.nn as nn
-import torch.nn.functional as F
 
 import math
 
@@ -9,7 +8,7 @@ class Net(nn.Module):
         super(Net, self).__init__()
 
         self.features = nn.Sequential(
-            nn.Conv2d(7, 32, kernel_size=5, padding=2),
+            nn.Conv2d(7, 32, kernel_size=5, padding=3),
             nn.BatchNorm2d(32),
             nn.ReLU(inplace=True),
             nn.Conv2d(32, 32, kernel_size=3, padding=2),
@@ -17,9 +16,6 @@ class Net(nn.Module):
             nn.ReLU(inplace=True),
             nn.MaxPool2d(kernel_size=2, stride=2),
             nn.Conv2d(32, 64, kernel_size=3, padding=1),
-            nn.BatchNorm2d(64),
-            nn.ReLU(inplace=True),
-            nn.Conv2d(64, 64, kernel_size=3, padding=1),
             nn.BatchNorm2d(64),
             nn.ReLU(inplace=True),
             nn.MaxPool2d(kernel_size=2, stride=2)
@@ -40,9 +36,6 @@ class Net(nn.Module):
         for m in self.classifier1.children():
             if isinstance(m, nn.Linear):
                 nn.init.xavier_uniform_(m.weight)
-            elif isinstance(m, nn.BatchNorm1d):
-                m.weight.data.fill_(1)
-                m.bias.data.zero_()
 
     def forward(self, x):
         x = self.features(x)
