@@ -129,7 +129,7 @@ class Visual:
                 self.highlight_winner(poses, stone)
                 return True
 
-        # diagonal check
+        # diagonal check 1
         for shift in range(5):
             stones = []
             poses = []
@@ -138,6 +138,19 @@ class Visual:
                 if cur is not None:
                     stones.append(cur.get_stone())
                     poses.append([i - k + shift, j - k + shift])
+            if self.check_list(stones, stone):
+                self.highlight_winner(poses, stone)
+                return True
+
+        # diagonal check 2
+        for shift in range(5):
+            stones = []
+            poses = []
+            for k in range(5):
+                cur = self.field.get_node(i - k + shift, j + k - shift)
+                if cur is not None:
+                    stones.append(cur.get_stone())
+                    poses.append([i - k + shift, j + k - shift])
             if self.check_list(stones, stone):
                 self.highlight_winner(poses, stone)
                 return True

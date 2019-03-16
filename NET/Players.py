@@ -51,10 +51,18 @@ class HumanPlayer:
 
 class AI:
     def __init__(self, number):
-        self.model = Net()
-        # self.model = torch.nn.DataParallel(self.model)
-        self.model.load_state_dict(torch.load("model{}.pth".format(number), map_location=lambda storage, loc: storage))
-        self.model.eval()
+        self.model_p = PNet()
+        self.model_p = torch.nn.DataParallel(self.model_p)
+        self.model_p.load_state_dict(
+            torch.load("model_p{}.pth".format(number), map_location=lambda storage, loc: storage))
+        self.model_p.eval()
+
+        self.model_v = VNet()
+        self.model_v = torch.nn.DataParallel(self.model_v)
+        self.model_v.load_state_dict(
+            torch.load("model_v{}.pth".format(number), map_location=lambda storage, loc: storage))
+        self.model_v.eval()
+
         self.empty = np.array([[0.0 for _ in range(15)] for _ in range(15)])
         self.white_turn = np.array([[-1.0 for _ in range(15)] for _ in range(15)])
         self.black_turn = np.array([[+1.0 for _ in range(15)] for _ in range(15)])
@@ -72,9 +80,14 @@ class AI:
             (black_field, white_field, turn_, self.past1_black, self.past1_white, self.past2_black, self.past2_white),
             axis=0))
         input_ = torch.stack([torch.from_numpy(input_).type(torch.FloatTensor)])
-        output = F.softmax(self.model(input_), dim=1)
+        policy = self.model_p(input_)
+        v = self.model_v(input_)
+        v = F.softmax(v, dim=1)
+        output_ = F.softmax(policy, dim=1)
+        prob = output_.detach().numpy()[0]
+        print(max(prob))
         while True:
-            move = output.data.max(1, keepdim=True)[1]
+            move = np.random.choice(np.arange(0, 225), p=prob)
             if field.get_node(move // 15, move % 15).is_empty():
                 if self.count_turns > 1:
                     self.past1_black = deepcopy(black_field)
@@ -86,4 +99,8 @@ class AI:
                     self.past1_white = deepcopy(white_field)
                 self.count_turns += 1
                 return move // 15, move % 15
-            output[0][move] -= 1
+            prob[move] = 0
+            prob = self.softmax(prob)
+
+    def softmax(self, x):
+        return np.exp(x) / np.sum(np.exp(x), axis=0)

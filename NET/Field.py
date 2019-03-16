@@ -52,7 +52,7 @@ class Field:
             return self.data[x][y]
 
     def make_move(self, x, y, stone):
-        if not (x < 0 or x > (self.size - 1) or y < 0 or y > (self.size - 1)):
+        if not (x < 0 or x > self.size or y < 0 or y > self.size - 1):
             if not self.data[x][y].is_empty():
                 return 0
             else:
