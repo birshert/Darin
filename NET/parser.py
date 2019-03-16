@@ -117,7 +117,7 @@ def parse_policy(count1, count2):
                                 axis=0)))
                         next_move = [change[data[i + 1][0]] - 1, int(data[i + 1][1]) - 1]
 
-                        data_y.append(deepcopy(next_move[0] * 15 + next_move[1]))
+                        data_y.append(deepcopy((next_move[0] + shift_x) * 15 + next_move[1] + shift_y))
 
                 stone = -stone
 
