@@ -4,6 +4,7 @@ from Net import *
 import torch
 import torch.nn
 import torch.nn.functional as F
+import time
 
 
 class KEYS:
@@ -38,8 +39,8 @@ class KEYS:
 
 
 class MCTS:
-    def __init__(self, number, iterations):
-        self.iterations = iterations
+    def __init__(self, number, time):
+        self.iterations_time = time
         self.empty = np.array([[0.0 for _ in range(15)] for _ in range(15)])
         self.white_turn = np.array([[-1.0 for _ in range(15)] for _ in range(15)])
         self.black_turn = np.array([[+1.0 for _ in range(15)] for _ in range(15)])
@@ -72,7 +73,14 @@ class MCTS:
         v = F.softmax(v, dim=1)
         v = v.detach().numpy()[0]
 
-        return policy.detach().numpy()[0], v.argmax()
+        add = np.random.normal(0, 0.001, 225)
+
+        if v.argmax() == 1:
+            v = v[1]
+        else:
+            v = -v[0]
+
+        return policy.detach().numpy()[0] + add, v
 
     def move(self, field, turn):
         self.past2_black = deepcopy(self.past1_black)
@@ -97,13 +105,19 @@ class MCTS:
 
         data = {root: [policy, deepcopy(node), deepcopy(node)]}
 
-        for _ in range(self.iterations):
+        start = time.clock()
+        eps = 0.05
+        while time.clock() - start + eps < self.iterations_time:
             if len(possible) != 0:
                 data = self.tree_search(deepcopy(data), deepcopy(possible), deepcopy(input_), deepcopy(turn))
 
         n_s = np.array(data[root][1])
         n_s = np.exp(n_s) / np.sum(np.exp(n_s))
-        move = n_s.argmax()
+        move = np.random.choice([i for i in range(225)], p=n_s)
+        while move not in possible:
+            n_s[move] = 0
+            n_s = np.exp(n_s) / np.sum(np.exp(n_s))
+
         return move // 15, move % 15
 
     @staticmethod
@@ -147,7 +161,7 @@ class MCTS:
             move = choosing.argmax()
 
             while move not in possible:
-                choosing[move] -= self.iterations
+                choosing[move] -= 1000
                 move = choosing.argmax()
 
             possible.remove(move)
@@ -158,10 +172,13 @@ class MCTS:
             black = not black
 
             if black:
-                if self.check_winner(move, field[0]):
+                ret, _ = self.check_sequence(5, move, field[0])
+                if ret:
                     winner = 1
                     break
-                elif self.check_winner(move, field[1]):
+            else:
+                ret, _ = self.check_sequence(5, move, field[1])
+                if ret:
                     winner = 1
                     break
 
@@ -171,9 +188,6 @@ class MCTS:
 
         if winner:
             evaluation = 1
-        else:
-            if not black and not evaluation:
-                evaluation = 1
 
         made_moves = list(reversed(made_moves))
 
@@ -192,55 +206,97 @@ class MCTS:
         return data
 
     @staticmethod
-    def check_winner(move, board):
+    def check_sequence(n, move, board):
         i = move // 15
         j = move % 15
+        complete_points = False
+        points = []
+        if n < 5:
+            complete_points = True
 
         # vertical check
-        for shift in range(5):
+        for shift in range(n):
             stones = []
+            poses = []
             cur = 0
-            for k in range(5):
+            for k in range(n):
                 if 15 > i - k + shift >= 0 and 15 > j >= 0:
                     cur = board[i - k + shift][j]
                 if cur:
                     stones.append(cur)
-            if len(stones) == 5:
-                return True
+                    poses.append([i - k + shift, j])
+            if len(stones) == n:
+                if complete_points:
+                    first = poses[0][0]
+                    second = poses[n - 1][0]
+                    j = poses[0][1]
+                    if 15 > first + 1 >= 0:
+                        points.append([first + 1, j])
+                    if 15 > second - 1 >= 0:
+                        points.append([second - 1, j])
+                return True, points
 
         # horizontal check
-        for shift in range(5):
+        for shift in range(n):
             stones = []
+            poses = []
             cur = 0
-            for k in range(5):
+            for k in range(n):
                 if 15 > i >= 0 and 15 > j - k + shift >= 0:
                     cur = board[i][j - k + shift]
+                    poses.append([i, j - k + shift])
                 if cur:
                     stones.append(cur)
-            if len(stones) == 5:
-                return True
+            if len(stones) == n:
+                if complete_points:
+                    first = poses[0][1]
+                    second = poses[n - 1][1]
+                    j = poses[0][0]
+                    if 15 > first + 1 >= 0:
+                        points.append([first + 1, j])
+                    if 15 > second - 1 >= 0:
+                        points.append([second - 1, j])
+                return True, points
 
         # diagonal check 1
-        for shift in range(5):
+        for shift in range(n):
             stones = []
+            poses = []
             cur = 0
-            for k in range(5):
+            for k in range(n):
                 if 15 > i - k + shift >= 0 and 15 > j - k + shift >= 0:
                     cur = board[i - k + shift][j - k + shift]
                 if cur:
                     stones.append(cur)
-            if len(stones) == 5:
-                return True
+                    poses.append([i - k + shift, j - k + shift])
+            if len(stones) == n:
+                if complete_points:
+                    first = poses[0]
+                    second = poses[n - 1]
+                    if 15 > first[0] + 1 >= 0 and 15 > first[1] + 1 >= 0:
+                        points.append([first[0] + 1, first[1] + 1])
+                    if 15 > second[0] - 1 >= 0 and 15 > second[1] - 1 >= 0:
+                        points.append([second[0] - 1, second[1] - 1])
+                return True, points
 
         # diagonal check 2
-        for shift in range(5):
+        for shift in range(n):
             stones = []
+            poses = []
             cur = 0
-            for k in range(5):
+            for k in range(n):
                 if 15 > i - k + shift >= 0 and 15 > j + k - shift >= 0:
                     cur = board[i - k + shift][j + k - shift]
                 if cur:
                     stones.append(cur)
-            if len(stones) == 5:
-                return True
-        return False
+                    poses.append([i - k + shift, j + k - shift])
+            if len(stones) == n:
+                if complete_points:
+                    first = poses[0]
+                    second = poses[n - 1]
+                    if 15 > first[0] + 1 >= 0 and 15 > first[1] - 1 >= 0:
+                        points.append([first[0] + 1, first[1] - 1])
+                    if 15 > second[0] - 1 >= 0 and 15 > second[1] + 1 >= 0:
+                        points.append([second[0] - 1, second[1] + 1])
+                return True, points
+        return False, points
