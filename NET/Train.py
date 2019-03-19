@@ -144,18 +144,18 @@ def main(epoches_num, sub_epoches_num):
 
         start = time.clock()
 
-        count = 30000
+        count = 60000
 
         dataset_p = make_dataset_p(count * number, count * (number + 1))
         dataset_v = make_dataset_v(count * number, count * (number + 1))
 
         print('Datasets ready, size {}, {}, time {}'.format(len(dataset_p), len(dataset_v), time.clock() - start))
 
-        loader_p = DataLoader(dataset_p, batch_size=2048, shuffle=True, drop_last=False, pin_memory=True,
-                            num_workers=torch.cuda.device_count() * 4)
+        loader_p = DataLoader(dataset_p, batch_size=4096, shuffle=True, drop_last=False, pin_memory=True,
+                              num_workers=torch.cuda.device_count() * 4)
 
-        loader_v = DataLoader(dataset_v, batch_size=2048, shuffle=True, drop_last=False, pin_memory=True,
-                            num_workers=torch.cuda.device_count() * 4)
+        loader_v = DataLoader(dataset_v, batch_size=4096, shuffle=True, drop_last=False, pin_memory=True,
+                              num_workers=torch.cuda.device_count() * 4)
 
         del dataset_p
         del dataset_v
@@ -166,11 +166,11 @@ def main(epoches_num, sub_epoches_num):
         if torch.cuda.is_available():
             loss = loss.to(device)
 
-        lr = 0.01
+        lr = 0.001
         optimizer1 = torch.optim.Adam(modelp.parameters(), lr=lr)
-        optimizer2 = torch.optim.Adam(modelv.parameters(), lr=lr)
-        shed1 = torch.optim.lr_scheduler.StepLR(optimizer1, step_size=3, gamma=0.2)
-        shed2 = torch.optim.lr_scheduler.StepLR(optimizer2, step_size=3, gamma=0.2)
+        optimizer2 = torch.optim.Adam(modelv.parameters(), lr=lr * 10)
+        shed1 = torch.optim.lr_scheduler.StepLR(optimizer1, step_size=4, gamma=0.15)
+        shed2 = torch.optim.lr_scheduler.StepLR(optimizer2, step_size=5, gamma=0.05)
 
         is_ = [0, sub_epoches_num - 1]  # printing accuracy
 
@@ -192,4 +192,4 @@ def main(epoches_num, sub_epoches_num):
         print("Finish epoch {}\n".format(number))
 
 
-main(67, 15)
+main(33, 15)

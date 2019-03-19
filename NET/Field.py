@@ -62,7 +62,7 @@ class Field:
                 if stone == 1:
                     self.black[x][y] = 1.0
                 elif stone == -1:
-                    self.white[x][y] = -1.0
+                    self.white[x][y] = 1.0
                 self.field[x][y] = stone
                 self.free.remove(x * 15 + y)
 

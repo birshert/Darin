@@ -1,5 +1,5 @@
 import pygame
-from casino import *
+from MCTS import *
 import numpy as np
 
 
@@ -47,7 +47,7 @@ class HumanPlayer:
 
 class AI:
     def __init__(self, number):
-        self.mcts = MCTS(number, 10)
+        self.mcts = MCTS(number, 25)
 
     def move_(self, field, turn):
         return self.mcts.move(field, turn)

@@ -81,7 +81,7 @@ def parse_policy(count1, count2):
         past2_black = deepcopy(empty_field)
 
         if data[0] != 'draw':
-            stone = -1.0
+            black = False
             for i in range(0, len(data) - 1):
                 if i > 2:
                     past2_white = deepcopy(past1_white)
@@ -93,18 +93,17 @@ def parse_policy(count1, count2):
 
                 if i > 0:
                     move = [change[data[i][0]] - 1 + shift_x, int(data[i][1]) - 1 + shift_y]
-                    if stone > 0:
-                        black_field[move[0]][move[1]] = stone
+                    if black:
+                        black_field[move[0]][move[1]] = 1.0
                     else:
-                        white_field[move[0]][move[1]] = stone
+                        white_field[move[0]][move[1]] = 1.0
 
-                if stone < 0:
+                if not black:
                     if data[0] == 'black':
                         data_x.append(deepcopy(
                             np.stack(
                                 (black_field, white_field, black_turn, past1_black, past1_white, past2_black,
-                                 past2_white),
-                                axis=0)))
+                                 past2_white))))
                         next_move = [change[data[i + 1][0]] - 1, int(data[i + 1][1]) - 1]
 
                         data_y.append(deepcopy(next_move[0] * 15 + next_move[1]))
@@ -113,13 +112,12 @@ def parse_policy(count1, count2):
                         data_x.append(deepcopy(
                             np.stack(
                                 (black_field, white_field, white_turn, past1_black, past1_white, past2_black,
-                                 past2_white),
-                                axis=0)))
+                                 past2_white))))
                         next_move = [change[data[i + 1][0]] - 1, int(data[i + 1][1]) - 1]
 
                         data_y.append(deepcopy((next_move[0] + shift_x) * 15 + next_move[1] + shift_y))
 
-                stone = -stone
+                black = not black
 
     x = torch.stack([torch.from_numpy(i).type(torch.FloatTensor) for i in data_x])
     y = torch.stack([torch.tensor(i) for i in data_y])
@@ -155,8 +153,7 @@ def parse_v(count1, count2):
 
     data_x = []
     data_y = []
-    white_turn = np.array([[-1.0 for _ in range(15)] for _ in range(15)])
-    black_turn = np.array([[+1.0 for _ in range(15)] for _ in range(15)])
+    turn = np.array([[1.0 for _ in range(15)] for _ in range(15)])
     empty_field = np.array([[0.0 for _ in range(15)] for _ in range(15)])
 
     for pos, line in enumerate(file):
@@ -174,7 +171,7 @@ def parse_v(count1, count2):
         past2_white = deepcopy(empty_field)
         past2_black = deepcopy(empty_field)
         if data[0] != 'draw':
-            stone = 1.0
+            black = False
             for i in range(0, len(data) - 1):
                 if i > 2:
                     past2_white = deepcopy(past1_white)
@@ -186,35 +183,31 @@ def parse_v(count1, count2):
 
                 if i > 0:
                     move = [change[data[i][0]] - 1 + shift_x, int(data[i][1]) - 1 + shift_y]
-                    if stone > 0:
-                        black_field[move[0]][move[1]] = stone
+                    if black:
+                        black_field[move[0]][move[1]] = 1.0
                     else:
-                        white_field[move[0]][move[1]] = stone
-
-                if stone < 0:
-                    turn = deepcopy(white_turn)
-                else:
-                    turn = deepcopy(black_turn)
+                        white_field[move[0]][move[1]] = 1.0
 
                 data_x.append(deepcopy(
-                    np.stack((black_field, white_field, turn, past1_black, past1_white, past2_black, past2_white),
-                             axis=0)))
+                    np.stack((black_field, white_field, turn, past1_black, past1_white, past2_black, past2_white))))
+
+                black = not black
+                turn = -turn
 
                 if data[0] == 'black':
-                    if stone > 0:
-                        v = 1  # 1 for winning
-                    else:
-                        v = 0  # 0 for losing
+                    v = 1  # 1 for black winning
                 else:
-                    if stone > 0:
-                        v = 0
-                    else:
-                        v = 1
+                    v = 0  # 0 for white winning
+
                 data_y.append(v)
-                stone = -stone
 
     x = torch.stack([torch.from_numpy(i).type(torch.FloatTensor) for i in data_x])
     y = torch.stack([torch.tensor(i) for i in data_y])
+
+    del data_x
+    del data_y
+
+    gc.collect()
 
     return x, y
 
