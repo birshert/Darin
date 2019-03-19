@@ -15,7 +15,7 @@ class Game:
         if player1 is None:
             player1 = AI(id_)
         if player2 is None:
-            player2 = HumanPlayer()
+            player2 = AI(id_)
         self.curr_player = player1
         self.turn = True
         for num in range(15 * 15):
@@ -49,4 +49,4 @@ class Game:
 
 a = Game()
 
-a.play_game(id_=47)
+a.play_game(id_=100)

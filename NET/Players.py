@@ -25,7 +25,8 @@ class HumanPlayer:
     def __init__(self):
         pass
 
-    def move_(self, field, turn):
+    @staticmethod
+    def move_(field, turn):
         while True:
             for event in pygame.event.get():
                 if event.type == pygame.MOUSEBUTTONDOWN:
@@ -47,7 +48,7 @@ class HumanPlayer:
 
 class AI:
     def __init__(self, number):
-        self.mcts = MCTS(number, 25)
+        self.mcts = MCTS(number, 5)
 
     def move_(self, field, turn):
         return self.mcts.move(field, turn)

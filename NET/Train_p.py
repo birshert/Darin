@@ -110,19 +110,19 @@ def main(epoches_num, sub_epoches_num):
         optimizer = torch.optim.Adam(model.parameters(), lr=lr)
         shed = torch.optim.lr_scheduler.StepLR(optimizer, step_size=4, gamma=0.15)
 
-        is_ = [0, sub_epoches_num - 1]  # printing accuracy
+        test(model, loader, device)
 
         for i in range(sub_epoches_num):
             print("SubEpoch {}".format(i))
             train(model, loader, loss, optimizer, device, shed)
-            if i in is_:
-                test(model, loader, device)
+
+        test(model, loader, device)
 
         del loader
 
         torch.cuda.empty_cache()
 
-        torch.save(model.state_dict(), path.format('v', number + 1))
+        torch.save(model.state_dict(), path.format('p', number + 1))
 
         print("Finish epoch {}\n".format(number))
 

@@ -166,20 +166,19 @@ def main(epoches_num, sub_epoches_num):
         if torch.cuda.is_available():
             loss = loss.to(device)
 
-        lr = 0.001
-        optimizer1 = torch.optim.Adam(modelp.parameters(), lr=lr)
-        optimizer2 = torch.optim.Adam(modelv.parameters(), lr=lr * 10)
+        optimizer1 = torch.optim.Adam(modelp.parameters(), lr=0.001)
+        optimizer2 = torch.optim.Adam(modelv.parameters(), lr=0.001)
         shed1 = torch.optim.lr_scheduler.StepLR(optimizer1, step_size=4, gamma=0.15)
-        shed2 = torch.optim.lr_scheduler.StepLR(optimizer2, step_size=5, gamma=0.05)
+        shed2 = torch.optim.lr_scheduler.StepLR(optimizer2, step_size=5, gamma=0.1)
 
-        is_ = [0, sub_epoches_num - 1]  # printing accuracy
+        test(modelp, modelv, loader_p, loader_v, device)
 
         for i in range(sub_epoches_num):
             print("SubEpoch {}".format(i))
             train_policy(modelp, loader_p, loss, optimizer1, device, shed1)
             train_v(modelv, loader_v, loss, optimizer2, device, shed2)
-            if i in is_:
-                test(modelp, modelv, loader_p, loader_v, device)
+
+        test(modelp, modelv, loader_p, loader_v, device)
 
         del loader_p
         del loader_v
