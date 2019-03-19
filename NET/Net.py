@@ -70,7 +70,7 @@ class VNet(nn.Module):
         super(VNet, self).__init__()
 
         self.features = nn.Sequential(
-            nn.Conv2d(7, 16, kernel_size=3, stride=1, padding=1),
+            nn.Conv2d(7, 16, kernel_size=5, stride=1, padding=1),
             nn.BatchNorm2d(16),
             nn.ReLU(inplace=True),
 

@@ -64,6 +64,7 @@ class MCTS:
         self.model_v.eval()
 
     def get_pv(self, field):
+        field = torch.stack([torch.from_numpy(field).type(torch.FloatTensor)])
         policy = self.model_p(field)
         policy = F.softmax(policy, dim=1)
 
@@ -105,13 +106,14 @@ class MCTS:
         move = n_s.argmax()
         return move // 15, move % 15
 
-    def update_field(self, field, move):
+    @staticmethod
+    def update_field(field, move):
         past2_black = deepcopy(field[3])
         past2_white = deepcopy(field[4])
         past1_black = deepcopy(field[0])
         past1_white = deepcopy(field[1])
         turn = deepcopy(field[2])
-        if turn:
+        if turn[0][0] > 0:
             field[0][move // 15][move % 15] = 1.0
         else:
             field[1][move // 15][move % 15] = 1.0
@@ -151,13 +153,17 @@ class MCTS:
             possible.remove(move)
             moves.add(move, black)
             made_moves.append(move)
-            field = self.update_field(deepcopy(field), move)
+            field = self.update_field(field, move)
 
             black = not black
 
-            if self.check_winner(move, field.field_()):
-                winner = 1
-                break
+            if black:
+                if self.check_winner(move, field[0]):
+                    winner = 1
+                    break
+                elif self.check_winner(move, field[1]):
+                    winner = 1
+                    break
 
         policy, evaluation = self.get_pv(field)
         node = [0 for _ in range(225)]
@@ -185,7 +191,8 @@ class MCTS:
 
         return data
 
-    def check_winner(self, move, board):
+    @staticmethod
+    def check_winner(move, board):
         i = move // 15
         j = move % 15
 
