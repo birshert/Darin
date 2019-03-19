@@ -49,4 +49,4 @@ class Game:
 
 a = Game()
 
-a.play_game(id_=3)
+a.play_game(id_=47)

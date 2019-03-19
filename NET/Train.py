@@ -144,7 +144,7 @@ def main(epoches_num, sub_epoches_num):
 
         start = time.clock()
 
-        count = 10
+        count = 30000
 
         dataset_p = make_dataset_p(count * number, count * (number + 1))
         dataset_v = make_dataset_v(count * number, count * (number + 1))
@@ -166,7 +166,7 @@ def main(epoches_num, sub_epoches_num):
         if torch.cuda.is_available():
             loss = loss.to(device)
 
-        lr = 0.001
+        lr = 0.01
         optimizer1 = torch.optim.Adam(modelp.parameters(), lr=lr)
         optimizer2 = torch.optim.Adam(modelv.parameters(), lr=lr)
         shed1 = torch.optim.lr_scheduler.StepLR(optimizer1, step_size=3, gamma=0.2)

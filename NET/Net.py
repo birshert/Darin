@@ -8,7 +8,7 @@ class PNet(nn.Module):
         super(PNet, self).__init__()
 
         self.features = nn.Sequential(
-            nn.Conv2d(7, 16, kernel_size=5, stride=1, padding=1),
+            nn.Conv2d(7, 16, kernel_size=3, stride=1, padding=1),
             nn.BatchNorm2d(16),
             nn.ReLU(inplace=True),
 
@@ -30,15 +30,12 @@ class PNet(nn.Module):
         )
 
         self.classifier = nn.Sequential(
-            nn.Dropout(p=0.05),
             nn.Linear(32 * 3 * 3, 512),
             nn.BatchNorm1d(512),
             nn.ReLU(inplace=True),
-            nn.Dropout(p=0.05),
             nn.Linear(512, 512),
             nn.BatchNorm1d(512),
             nn.ReLU(inplace=True),
-            nn.Dropout(p=0.05),
             nn.Linear(512, 15 * 15)
         )
 
@@ -70,7 +67,7 @@ class VNet(nn.Module):
         super(VNet, self).__init__()
 
         self.features = nn.Sequential(
-            nn.Conv2d(7, 16, kernel_size=5, stride=1, padding=1),
+            nn.Conv2d(7, 16, kernel_size=3, stride=1, padding=1),
             nn.BatchNorm2d(16),
             nn.ReLU(inplace=True),
 
@@ -92,15 +89,12 @@ class VNet(nn.Module):
         )
 
         self.classifier = nn.Sequential(
-            nn.Dropout(p=0.05),
             nn.Linear(32 * 3 * 3, 512),
             nn.BatchNorm1d(512),
             nn.ReLU(inplace=True),
-            nn.Dropout(p=0.05),
             nn.Linear(512, 512),
             nn.BatchNorm1d(512),
             nn.ReLU(inplace=True),
-            nn.Dropout(p=0.05),
             nn.Linear(512, 2)
         )
 

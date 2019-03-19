@@ -44,6 +44,8 @@ class Field:
                     elif start[i][j].get_stone() == -1:
                         self.white[i][j] = -1
 
+        self.free = [i for i in range(225)]
+
     def get_size(self):
         return self.size
 
@@ -62,6 +64,7 @@ class Field:
                 elif stone == -1:
                     self.white[x][y] = -1.0
                 self.field[x][y] = stone
+                self.free.remove(x * 15 + y)
 
     def get_field(self):
         return deepcopy(self.data)
