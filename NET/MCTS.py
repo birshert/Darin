@@ -37,12 +37,16 @@ class KEYS:
         self.set[pos].remove(elem)
         self.normalize()
 
+    def empty(self):
+        return not (len(self.set1) or len(self.set2))
+
 
 class MCTS:
     def __init__(self, number, time):
         self.iterations_time = time
+        self.t = 1
         self.empty = np.array([[0.0 for _ in range(15)] for _ in range(15)])
-        self.white_turn = np.array([[-1.0 for _ in range(15)] for _ in range(15)])
+        self.white_turn = np.array([[0.0 for _ in range(15)] for _ in range(15)])
         self.black_turn = np.array([[+1.0 for _ in range(15)] for _ in range(15)])
         self.black_field = deepcopy(self.empty)
         self.white_field = deepcopy(self.empty)
@@ -50,39 +54,25 @@ class MCTS:
         self.past1_white = deepcopy(self.empty)
         self.past2_black = deepcopy(self.empty)
         self.past2_white = deepcopy(self.empty)
+        self.past3_black = deepcopy(self.empty)
+        self.past3_white = deepcopy(self.empty)
         self.count_turns = 0
 
-        self.model_p = PNet()
-        self.model_p = torch.nn.DataParallel(self.model_p)
-        self.model_p.load_state_dict(
-            torch.load("model_p{}.pth".format(number), map_location=lambda storage, loc: storage))
-        self.model_p.eval()
-
-        self.model_v = VNet()
-        self.model_v = torch.nn.DataParallel(self.model_v)
-        self.model_v.load_state_dict(
-            torch.load("model_v{}.pth".format(number), map_location=lambda storage, loc: storage))
-        self.model_v.eval()
+        self.model = Net()
+        # self.model = torch.nn.DataParallel(self.model)
+        self.model.load_state_dict(torch.load("model_{}.pth".format(number), map_location=lambda storage, loc: storage))
+        self.model.eval()
 
     def get_pv(self, field):
-        field = torch.stack([torch.from_numpy(field).type(torch.FloatTensor)])
-        policy = self.model_p(field)
+        data_ = torch.stack([torch.from_numpy(field).type(torch.FloatTensor)])
+        policy, value = self.model(data_)
         policy = F.softmax(policy, dim=1)
 
-        v = self.model_v(field)
-        v = F.softmax(v, dim=1)
-        v = v.detach().numpy()[0]
-
-        add = np.random.normal(0, 0.001, 225)
-
-        if v.argmax() == 1:
-            v = v[1]
-        else:
-            v = -v[0]
-
-        return policy.detach().numpy()[0] + add, v
+        return policy.detach().numpy()[0], value
 
     def move(self, field, turn):
+        self.past3_black = deepcopy(self.past2_black)
+        self.past3_white = deepcopy(self.past2_white)
         self.past2_black = deepcopy(self.past1_black)
         self.past2_white = deepcopy(self.past1_white)
         self.past1_black = deepcopy(self.black_field)
@@ -91,11 +81,10 @@ class MCTS:
         self.white_field = deepcopy(field.get_white())
         turn_ = self.black_turn * turn + (not turn) * self.white_turn
 
-        input_ = deepcopy(np.stack(
-            (self.black_field, self.white_field, turn_, self.past1_black, self.past1_white, self.past2_black,
-             self.past2_white)))
+        input_ = np.stack((self.black_field, self.white_field, self.past1_black, self.past1_white, self.past2_black,
+                           self.past2_white, self.past3_black, self.past3_white, turn_))
 
-        policy, evaluation = self.get_pv(input_)
+        policy, evaluation = self.get_pv(deepcopy(input_))
 
         possible = deepcopy(field.free)
 
@@ -106,24 +95,28 @@ class MCTS:
         data = {root: [policy, deepcopy(node), deepcopy(node)]}
 
         start = time.clock()
-        eps = 0.05
+        eps = 0.1
         while time.clock() - start + eps < self.iterations_time:
             if len(possible) != 0:
-                data = self.tree_search(deepcopy(data), deepcopy(possible), deepcopy(input_), deepcopy(turn))
+                data = self.tree_search(data, deepcopy(possible), input_, deepcopy(turn))
 
         n_s = np.array(data[root][1])
-        n_s = np.exp(n_s) / np.sum(np.exp(n_s))
-        move = np.random.choice([i for i in range(225)], p=n_s)
-        while move not in possible:
-            n_s[move] = 0
-            n_s = np.exp(n_s) / np.sum(np.exp(n_s))
+        n_s = np.power(n_s, (1 / self.t)) / np.sum(np.power(n_s, (1 / self.t)))
+        move = np.random.choice([i for i in range(15 * 15)], p=n_s)
+        self.count_turns += 2
+        if self.count_turns > 30:
+            self.t = 0.5
+        if self.count_turns > 50:
+            self.t = 0.1
 
         return move // 15, move % 15
 
     @staticmethod
     def update_field(field, move):
-        past2_black = deepcopy(field[3])
-        past2_white = deepcopy(field[4])
+        past3_black = deepcopy(field[4])
+        past3_white = deepcopy(field[5])
+        past2_black = deepcopy(field[2])
+        past2_white = deepcopy(field[3])
         past1_black = deepcopy(field[0])
         past1_white = deepcopy(field[1])
         turn = deepcopy(field[2])
@@ -131,11 +124,13 @@ class MCTS:
             field[0][move // 15][move % 15] = 1.0
         else:
             field[1][move // 15][move % 15] = 1.0
-        field[2] *= -1
-        field[3] = past1_black
-        field[4] = past1_white
-        field[5] = past2_black
-        field[6] = past2_white
+        field[2] = past1_black
+        field[3] = past1_white
+        field[4] = past2_black
+        field[5] = past2_white
+        field[6] = past3_black
+        field[7] = past3_white
+        field[8] = 1 - field[8]
 
         return field
 
@@ -154,7 +149,9 @@ class MCTS:
             n_s = data[current][1]
             q = np.array(data[current][2])
 
-            u = np.array([policy[i] / (n_s[i] + 1) for i in range(15 * 15)])
+            c = np.sqrt(np.sum(n_s))
+
+            u = np.array([policy[i] * c / (n_s[i] + 1) for i in range(15 * 15)])
 
             choosing = u + q
 
@@ -167,7 +164,7 @@ class MCTS:
             possible.remove(move)
             moves.add(move, black)
             made_moves.append(move)
-            field = self.update_field(field, move)
+            field = self.update_field(deepcopy(field), move)
 
             black = not black
 
@@ -187,7 +184,7 @@ class MCTS:
         data[str(moves)] = [deepcopy(policy), deepcopy(node), deepcopy(node)]
 
         if winner:
-            evaluation = 1
+            evaluation = 1 * black + -1 * (not black)
 
         made_moves = list(reversed(made_moves))
 
@@ -195,7 +192,6 @@ class MCTS:
             black = not black
             moves.remove(move, black)
             current = str(moves)
-
             n_s = data[current][1]
             q = data[current][2]
             n_s[move] += 1
@@ -244,9 +240,9 @@ class MCTS:
             for k in range(n):
                 if 15 > i >= 0 and 15 > j - k + shift >= 0:
                     cur = board[i][j - k + shift]
-                    poses.append([i, j - k + shift])
                 if cur:
                     stones.append(cur)
+                    poses.append([i, j - k + shift])
             if len(stones) == n:
                 if complete_points:
                     first = poses[0][1]

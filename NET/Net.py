@@ -1,127 +1,97 @@
 import torch.nn as nn
-
 import math
 
 
-class PNet(nn.Module):
+class Net(nn.Module):
     def __init__(self):
-        super(PNet, self).__init__()
+        super(Net, self).__init__()
 
-        self.features = nn.Sequential(
-            nn.Conv2d(7, 16, kernel_size=5, stride=1, padding=1),
-            nn.BatchNorm2d(16),
-            nn.ReLU(inplace=True),
-
-            nn.Conv2d(16, 16, kernel_size=3, stride=1, padding=1),
-            nn.BatchNorm2d(16),
-            nn.ReLU(inplace=True),
-
-            nn.MaxPool2d(kernel_size=2, stride=2),
-
-            nn.Conv2d(16, 32, kernel_size=3, stride=1, padding=1),
-            nn.BatchNorm2d(32),
-            nn.ReLU(inplace=True),
-
-            nn.Conv2d(32, 32, kernel_size=3, stride=1, padding=1),
-            nn.BatchNorm2d(32),
-            nn.ReLU(inplace=True),
-
-            nn.MaxPool2d(kernel_size=2, stride=2)
+        self.convolutional = nn.Sequential(
+            nn.Conv2d(9, 256, kernel_size=3, stride=1, padding=1),
+            nn.BatchNorm2d(256),
+            nn.ReLU(inplace=True)
         )
 
-        self.classifier = nn.Sequential(
-            nn.Dropout(p=0.1),
-            nn.Linear(32 * 3 * 3, 512),
-            nn.BatchNorm1d(512),
+        self.residual1 = nn.Sequential(
+            nn.Conv2d(256, 256, kernel_size=3, stride=1, padding=1),
+            nn.BatchNorm2d(256),
             nn.ReLU(inplace=True),
-            nn.Dropout(p=0.1),
-            nn.Linear(512, 512),
-            nn.BatchNorm1d(512),
-            nn.ReLU(inplace=True),
-            nn.Dropout(p=0.1),
-            nn.Linear(512, 15 * 15)
+            nn.Conv2d(256, 256, kernel_size=3, stride=1, padding=1),
+            nn.BatchNorm2d(256),
+            nn.ReLU(inplace=True)
         )
 
-        for m in self.features.children():
-            if isinstance(m, nn.Conv2d):
+        self.residual2 = nn.Sequential(
+            nn.Conv2d(256, 256, kernel_size=3, stride=1, padding=1),
+            nn.BatchNorm2d(256),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(256, 256, kernel_size=3, stride=1, padding=1),
+            nn.BatchNorm2d(256),
+            nn.ReLU(inplace=True)
+        )
+
+        self.policy1 = nn.Sequential(
+            nn.Conv2d(256, 2, kernel_size=1, stride=1),
+            nn.BatchNorm2d(2),
+            nn.ReLU(inplace=True)
+        )
+
+        self.policy2 = nn.Sequential(
+            nn.Linear(450, 15 * 15),
+            nn.ReLU(inplace=True)
+        )
+
+        self.value1 = nn.Sequential(
+            nn.Conv2d(256, 1, kernel_size=1, stride=1),
+            nn.BatchNorm2d(1),
+            nn.ReLU(inplace=True)
+        )
+
+        self.value2 = nn.Sequential(
+            nn.Linear(225, 256),
+            nn.ReLU(inplace=True),
+            nn.Linear(256, 1),
+            nn.Tanh()
+        )
+
+        self.weight_init(self.convolutional)
+        self.weight_init(self.residual1)
+        self.weight_init(self.residual2)
+        self.weight_init(self.policy1)
+        self.weight_init(self.policy2)
+        self.weight_init(self.value1)
+        self.weight_init(self.value2)
+
+    def head(self, x):
+        x1 = self.policy1(x)
+        x1 = x1.view(x1.size(0), -1)
+        x1 = self.policy2(x1)
+
+        x2 = self.value1(x)
+        x2 = x2.view(x2.size(0), -1)
+        x2 = self.value2(x2)
+
+        return x1, x2
+
+
+    @staticmethod
+    def weight_init(elem):
+        for m in elem.children():
+            if isinstance(m, nn.Linear):
+                nn.init.xavier_uniform_(m.weight)
+            elif isinstance(m, nn.Conv2d):
                 n = m.kernel_size[0] * m.kernel_size[1] * m.out_channels
                 m.weight.data.normal_(0, math.sqrt(2.0 / n))
             elif isinstance(m, nn.BatchNorm2d):
                 m.weight.data.fill_(1)
                 m.bias.data.zero_()
 
-        for m in self.classifier.children():
-            if isinstance(m, nn.Linear):
-                nn.init.xavier_uniform_(m.weight)
-            elif isinstance(m, nn.BatchNorm1d):
-                m.weight.data.fill_(1)
-                m.bias.data.zero_()
-
     def forward(self, x):
-        x = self.features(x)
-        x = x.view(x.size(0), -1)
-        x = self.classifier(x)
+        x = self.convolutional(x)   # convolutional
 
-        return x
+        out = self.residual1(x)     # residual tower
+        x = x + out                 #
+        out = self.residual2(x)     #
+        x = x + out                 #
 
-
-class VNet(nn.Module):
-    def __init__(self):
-        super(VNet, self).__init__()
-
-        self.features = nn.Sequential(
-            nn.Conv2d(7, 16, kernel_size=5, stride=1, padding=1),
-            nn.BatchNorm2d(16),
-            nn.ReLU(inplace=True),
-
-            nn.Conv2d(16, 16, kernel_size=3, stride=1, padding=1),
-            nn.BatchNorm2d(16),
-            nn.ReLU(inplace=True),
-
-            nn.MaxPool2d(kernel_size=2, stride=2),
-
-            nn.Conv2d(16, 32, kernel_size=3, stride=1, padding=1),
-            nn.BatchNorm2d(32),
-            nn.ReLU(inplace=True),
-
-            nn.Conv2d(32, 32, kernel_size=3, stride=1, padding=1),
-            nn.BatchNorm2d(32),
-            nn.ReLU(inplace=True),
-
-            nn.MaxPool2d(kernel_size=2, stride=2)
-        )
-
-        self.classifier = nn.Sequential(
-            nn.Dropout(p=0.3),
-            nn.Linear(32 * 3 * 3, 512),
-            nn.BatchNorm1d(512),
-            nn.ReLU(inplace=True),
-            nn.Dropout(p=0.3),
-            nn.Linear(512, 512),
-            nn.BatchNorm1d(512),
-            nn.ReLU(inplace=True),
-            nn.Dropout(p=0.3),
-            nn.Linear(512, 2)
-        )
-
-        for m in self.features.children():
-            if isinstance(m, nn.Conv2d):
-                n = m.kernel_size[0] * m.kernel_size[1] * m.out_channels
-                m.weight.data.normal_(0, math.sqrt(2.0 / n))
-            elif isinstance(m, nn.BatchNorm2d):
-                m.weight.data.fill_(1)
-                m.bias.data.zero_()
-
-        for m in self.classifier.children():
-            if isinstance(m, nn.Linear):
-                nn.init.xavier_uniform_(m.weight)
-            elif isinstance(m, nn.BatchNorm1d):
-                m.weight.data.fill_(1)
-                m.bias.data.zero_()
-
-    def forward(self, x):
-        x = self.features(x)
-        x = x.view(x.size(0), -1)
-        x = self.classifier(x)
-
-        return x
+        return self.head(x)
