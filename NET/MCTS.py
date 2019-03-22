@@ -45,6 +45,7 @@ class MCTS:
     def __init__(self, number, time):
         self.iterations_time = time
         self.t = 1
+        self.black = True
         self.empty = np.array([[0.0 for _ in range(15)] for _ in range(15)])
         self.white_turn = np.array([[0.0 for _ in range(15)] for _ in range(15)])
         self.black_turn = np.array([[+1.0 for _ in range(15)] for _ in range(15)])
@@ -88,6 +89,7 @@ class MCTS:
         return policy.detach().numpy()[0], value.detach().numpy()[0]
 
     def move(self, field, turn):
+        self.black = turn
         self.past4_black = deepcopy(self.past3_black)
         self.past4_white = deepcopy(self.past3_white)
         self.past3_black = deepcopy(self.past2_black)
@@ -125,7 +127,7 @@ class MCTS:
         eps = 0.2
         while time.clock() - start + eps < self.iterations_time:
             if len(possible) != 0:
-                data = self.tree_search(data, deepcopy(possible), input_, deepcopy(turn))
+                data = self.tree_search(data, deepcopy(possible), input_)
 
         n_s = np.array(data[root][1])
         n_s = np.power(n_s, (1 / self.t)) / np.sum(np.power(n_s, (1 / self.t)))
@@ -169,8 +171,8 @@ class MCTS:
 
         return field
 
-    def tree_search(self, data, possible, field, turn):
-        black = turn
+    def tree_search(self, data, possible, field):
+        black = self.black
         moves = KEYS()
         made_moves = []
         winner = 0
@@ -204,28 +206,26 @@ class MCTS:
             black = not black
 
             if black:
-                ret = self.check_sequence(5, move, field[0])
-                if ret:
-                    winner = 1
+                if self.check_sequence(5, move, field[0]):
+                    if self.black:
+                        winner = 1
+                    else:
+                        winner = -1
                     break
             else:
-                ret = self.check_sequence(5, move, field[1])
-                if ret:
-                    winner = -1
+                if self.check_sequence(5, move, field[1]):
+                    if self.black:
+                        winner = -1
+                    else:
+                        winner = 1
                     break
 
         policy, evaluation = self.get_pv(field)
 
-        if evaluation[0] > evaluation[1]:
-            if black:
-                evaluation = -evaluation[0]
-            else:
-                evaluation = evaluation[0]
+        if black:
+            evaluation = evaluation[1] - evaluation[0]
         else:
-            if black:
-                evaluation = evaluation[1]
-            else:
-                evaluation = -evaluation[1]
+            evaluation = evaluation[0] - evaluation[1]
 
         if winner:
             evaluation = winner
