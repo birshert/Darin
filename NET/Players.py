@@ -5,20 +5,13 @@ import numpy as np
 
 class RandomPlayer:
     def __init__(self):
-        self.possible_ = []
+        pass
 
-    def possible_moves(self, field):
-        moves = []
-        for i in range(field.get_size()):
-            for j in range(field.get_size()):
-                if field.get_node(i, j).is_empty():
-                    moves.append([i, j])
-        self.possible_ = moves
-
-    def move_(self, field, turn):
-        self.possible_moves(field)
-        pos = np.random.randint(0, len(self.possible_))
-        return self.possible_[pos]
+    @staticmethod
+    def move_(field, turn):
+        possible = field.free
+        pos = np.random.randint(0, len(possible))
+        return possible[pos] // 15, possible[pos] % 15
 
 
 class HumanPlayer:
@@ -51,4 +44,73 @@ class AI:
         self.mcts = MCTS(number, 5)
 
     def move_(self, field, turn):
+        ret, move = self.trick(deepcopy(field.get_black() * turn + field.get_white() * (not turn)), field.free)
+        if ret:
+            return move // 15, move % 15
+        ret, move = self.trick(deepcopy(field.get_black() * (not turn) + field.get_white() * turn), field.free)
+        if ret:
+            return move // 15, move % 15
+
         return self.mcts.move(field, turn)
+
+    def trick(self, board, free):
+        for move in free:
+            board[move // 15][move % 15] = 1.0
+            if self.check_sequence(5, move, board):
+                return True, move
+            board[move // 15][move % 15] = 0.0
+        return False, 0
+
+    @staticmethod
+    def check_sequence(n, move, board):
+        i = move // 15
+        j = move % 15
+
+        # vertical check
+        for shift in range(n):
+            stones = []
+            cur = 0
+            for k in range(n):
+                if 15 > i - k + shift >= 0 and 15 > j >= 0:
+                    cur = board[i - k + shift][j]
+                    if cur:
+                        stones.append(cur)
+            if len(stones) == n:
+                return True
+
+        # horizontal check
+        for shift in range(n):
+            stones = []
+            cur = 0
+            for k in range(n):
+                if 15 > i >= 0 and 15 > j - k + shift >= 0:
+                    cur = board[i][j - k + shift]
+                    if cur:
+                        stones.append(cur)
+            if len(stones) == n:
+                return True
+
+        # diagonal check 1
+        for shift in range(n):
+            stones = []
+            cur = 0
+            for k in range(n):
+                if 15 > i - k + shift >= 0 and 15 > j - k + shift >= 0:
+                    cur = board[i - k + shift][j - k + shift]
+                    if cur:
+                        stones.append(cur)
+            if len(stones) == n:
+                return True
+
+        # diagonal check 2
+        for shift in range(n):
+            stones = []
+            cur = 0
+            for k in range(n):
+                if 15 > i - k + shift >= 0 and 15 > j + k - shift >= 0:
+                    cur = board[i - k + shift][j + k - shift]
+                    if cur:
+                        stones.append(cur)
+            if len(stones) == n:
+                return True
+        return False

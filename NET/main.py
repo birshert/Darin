@@ -13,7 +13,7 @@ class Game:
     def game_(self, player1=None, player2=None, id_=None):
         self.vis.reset_board()
         if player1 is None:
-            player1 = AI(id_)
+            player1 = HumanPlayer()
         if player2 is None:
             player2 = AI(id_)
         self.curr_player = player1
@@ -49,4 +49,4 @@ class Game:
 
 a = Game()
 
-a.play_game(id_=0)
+a.play_game(id_=180)

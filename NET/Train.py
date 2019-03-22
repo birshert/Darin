@@ -11,7 +11,7 @@ import os
 import gc
 
 
-def train(model, loader, criterion1, criterion2, optimizer, device, shed):
+def train(model, loader, criterion, optimizer, device, shed):
     start = time.clock()
 
     model.train()
@@ -25,19 +25,11 @@ def train(model, loader, criterion1, criterion2, optimizer, device, shed):
         else:
             data = data.type(torch.FloatTensor)
 
-        target1 = torch.stack([target[i][0] for i in range(len(target))]).type(torch.LongTensor)
-        target2 = torch.stack([target[i][1] for i in range(len(target))])
+        target = target.to(device)
 
-        target1 = target1.to(device)
+        output = model(data)
 
-        target2 = target2.to(device)
-
-        policy, value = model(data)
-
-        loss1 = criterion1(policy, target1)
-        loss2 = criterion2(value, target2)
-
-        loss = loss1 * 0.5 + loss2 * 0.5
+        loss = criterion(output, target)
 
         loss.backward()
         optimizer.step()
@@ -46,41 +38,49 @@ def train(model, loader, criterion1, criterion2, optimizer, device, shed):
     print("Training finished, total time = {}".format(finish - start))
 
 
-def test(model, loader, device):
-    model.eval()
+def test(model1, loader1, model2, loader2, device):
+    model1.eval()
+    model2.eval()
 
     with torch.no_grad():
         correct_p = 0
         correct_v = 0
 
-        for data, target in loader:
+        for data, target in loader1:
             if torch.cuda.is_available():
                 data = data.type(torch.cuda.FloatTensor)
             else:
                 data = data.type(torch.FloatTensor)
 
-            policy, value = model(data)
+            policy = model1(data)
 
             policy = F.softmax(policy, dim=1)
 
-            target1 = torch.stack([target[i][0] for i in range(len(target))]).type(torch.LongTensor)
-            target2 = torch.stack([target[i][1] for i in range(len(target))])
-
-            target1 = target1.to(device)
-
-            target2 = target2.to(device)
+            target = target.to(device)
 
             pred = policy.data.max(1, keepdim=True)[1]
-            correct_p += int(pred.eq(target1.data.view_as(pred)).sum())
+            correct_p += int(pred.eq(target.data.view_as(pred)).sum())
 
-            for i in range(target2.size(0)):
-                if target2[i] * value[i] > 0:
-                    correct_v += 1
+        for data, target in loader2:
+            if torch.cuda.is_available():
+                data = data.type(torch.cuda.FloatTensor)
+            else:
+                data = data.type(torch.FloatTensor)
 
-        print("Test: p {}/{}, v {}/{}".format(correct_p, len(loader.dataset), correct_v, len(loader.dataset)))
+            v = model2(data)
+
+            v = F.softmax(v, dim=1)
+
+            target = target.to(device)
+
+            pred = v.data.max(1, keepdim=True)[1]
+            correct_v += int(pred.eq(target.data.view_as(pred)).sum())
+
+        print("Policy {:.3f} ".format(correct_p / len(loader1.dataset)) + "V {:.3f}".format(
+            correct_v / len(loader2.dataset)))
 
 
-def main(epoches_num, sub_epoches_num):
+def main(epoches_num):
     gc.enable()
     print("Available cudas {}\n".format(torch.cuda.device_count()))
 
@@ -88,65 +88,76 @@ def main(epoches_num, sub_epoches_num):
 
     print(device, '\n')
 
-    model = Net()
+    model1 = Net()
+    model2 = VNet()
 
     if torch.cuda.device_count() > 1:
-        modelp = torch.nn.DataParallel(model, device_ids=[0, 1, 2, 3])
+        model1 = torch.nn.DataParallel(model1)
+        print("Using {} cudas for our model".format(torch.cuda.device_count()))
+        model2 = torch.nn.DataParallel(model2)
         print("Using {} cudas for our model\n".format(torch.cuda.device_count()))
 
-    path = "model_{}.pth"
+    path = "model_{}{}.pth"
+
+    loss1 = torch.nn.CrossEntropyLoss()
+    loss2 = torch.nn.CrossEntropyLoss()
+
+    loss1 = loss1.to(device)
+    loss2 = loss2.to(device)
+
+    lr = 0.01
+
+    optimizer1 = torch.optim.Adam(model1.parameters(), lr=lr)
+    shed1 = torch.optim.lr_scheduler.StepLR(optimizer1, step_size=10, gamma=0.5)
+    optimizer2 = torch.optim.Adam(model2.parameters(), lr=lr)
+    shed2 = torch.optim.lr_scheduler.StepLR(optimizer2, step_size=10, gamma=0.5)
 
     for number in range(epoches_num):
         print("Start epoch {}".format(number))
 
-        if os.path.isfile(path.format(number)):
-            model.load_state_dict(torch.load(path.format(number), map_location=lambda storage, loc: storage))
-            print("Model loaded\n")
+        if os.path.isfile(path.format('p', number)):
+            model1.load_state_dict(torch.load(path.format('p', number), map_location=lambda storage, loc: storage))
+            print("Model p loaded")
+        if os.path.isfile(path.format('v', number)):
+            model2.load_state_dict(torch.load(path.format('v', number), map_location=lambda storage, loc: storage))
+            print("Model v loaded\n")
 
-        model = model.to(device)
+        model1 = model1.to(device)
+        model2 = model2.to(device)
 
         start = time.clock()
 
-        count = 10000
+        count = 10
 
         torch.cuda.empty_cache()
 
-        dataset = make_dataset(count * number, count * (number + 1))
+        dataset1, dataset2 = make_dataset(count * number, count * (number + 1))
 
-        print('Dataset ready, size {}, time {}'.format(len(dataset), time.clock() - start))
+        print('Datasets ready, size {}, {}, time {}'.format(len(dataset1), len(dataset2), time.clock() - start))
 
-        loader = DataLoader(dataset, batch_size=4096, shuffle=True, drop_last=False, pin_memory=True, num_workers=4)
+        loader1 = DataLoader(dataset1, batch_size=4096, shuffle=True, drop_last=False, pin_memory=True, num_workers=16)
+        loader2 = DataLoader(dataset2, batch_size=4096, shuffle=True, drop_last=False, pin_memory=True, num_workers=16)
 
-        del dataset
-
-        torch.cuda.empty_cache()
-
-        loss1 = torch.nn.CrossEntropyLoss()
-        loss2 = torch.nn.MSELoss()
-
-        loss1 = loss1.to(device)
-        loss2 = loss2.to(device)
-
-        lr = 0.01
-
-        optimizer = torch.optim.Adam(model.parameters(), lr=lr)
-        shed = torch.optim.lr_scheduler.StepLR(optimizer, step_size=5, gamma=0.2)
-
-        test(model, loader, device)
-
-        for i in range(sub_epoches_num):
-            print("SubEpoch {}".format(i))
-            train(model, loader, loss1, loss2, optimizer, device, shed)
-
-        test(model, loader, device)
-
-        del loader
+        del dataset1
+        del dataset2
 
         torch.cuda.empty_cache()
 
-        torch.save(model.state_dict(), path.format(number + 1))
+        train(model1, loader1, loss1, optimizer1, device, shed1)
+        train(model2, loader2, loss2, optimizer2, device, shed2)
+
+        if number % 10 == 0:
+            test(model1, loader1, model2, loader2, device)
+
+        del loader1
+        del loader2
+
+        torch.cuda.empty_cache()
+
+        torch.save(model1.state_dict(), path.format('p', number + 1))
+        torch.save(model2.state_dict(), path.format('v', number + 1))
 
         print("Finish epoch {}\n".format(number))
 
 
-main(150, 20)
+main(300)
