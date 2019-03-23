@@ -251,7 +251,11 @@ class MCTS:
         n_s = np.array(data[root][1])
         n_s = np.power(n_s, (1 / self.t)) / np.sum(np.power(n_s, (1 / self.t)))
 
-        move = n_s.argmax()
+        move = np.random.choice([i for i in range(225)], p=n_s)
+
+        while move not in possible:
+            n_s[move] -= 10
+            move = np.random.choice([i for i in range(225)], p=n_s)
 
         self.count_turns += 2
         if self.count_turns > 30:
@@ -313,12 +317,12 @@ class MCTS:
 
             u = np.array([policy[i] * c / (n_s[i] + 1) for i in range(15 * 15)])
 
-            choosing = u + q
+            choosing = 3 * u + 2 * q
 
             move = choosing.argmax()
 
             while move not in possible:
-                choosing[move] -= 100
+                choosing[move] -= 100000
                 move = choosing.argmax()
 
             possible.remove(move)
@@ -346,9 +350,9 @@ class MCTS:
         policy, evaluation = self.get_pv(field)
 
         if not black:
-            evaluation = evaluation[1] - evaluation[0]
+            evaluation = (evaluation[1] - evaluation[0])
         else:
-            evaluation = evaluation[0] - evaluation[1]
+            evaluation = (evaluation[0] - evaluation[1])
 
         if winner:
             evaluation = winner
