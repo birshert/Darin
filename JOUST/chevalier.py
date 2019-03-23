@@ -317,7 +317,7 @@ class MCTS:
 
             u = np.array([policy[i] * c / (n_s[i] + 1) for i in range(15 * 15)])
 
-            choosing = 3 * u + 2 * q
+            choosing = u + q
 
             move = choosing.argmax()
 
