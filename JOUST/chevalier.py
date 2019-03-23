@@ -251,11 +251,7 @@ class MCTS:
         n_s = np.array(data[root][1])
         n_s = np.power(n_s, (1 / self.t)) / np.sum(np.power(n_s, (1 / self.t)))
 
-        move = np.random.choice([i for i in range(225)], p=n_s)
-
-        while move not in possible:
-            n_s[move] -= 10
-            move = np.random.choice([i for i in range(225)], p=n_s)
+        move = n_s.argmax()
 
         self.count_turns += 2
         if self.count_turns > 30:
@@ -263,7 +259,7 @@ class MCTS:
         if self.count_turns > 50:
             self.t = 0.1
 
-        return [move // 15, move % 15]
+        return move // 15, move % 15
 
     @staticmethod
     def normalize(key):
