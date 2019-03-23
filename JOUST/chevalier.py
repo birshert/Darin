@@ -189,13 +189,13 @@ class MCTS:
         self.model = Net()
         self.model = torch.nn.DataParallel(self.model)
         self.model.load_state_dict(
-            torch.load("model_p{}.pth".format(1000), map_location=lambda storage, loc: storage))
+            torch.load("model_p{}.pth".format(100500), map_location=lambda storage, loc: storage))
         self.model.to(self.device)
         self.model.eval()
 
         self.model2 = VNet()
         self.model2.load_state_dict(
-            torch.load("model_v{}.pth".format(1000), map_location=lambda storage, loc: storage))
+            torch.load("model_v{}.pth".format(100500), map_location=lambda storage, loc: storage))
         self.model2.to(self.device)
         self.model2.eval()
 
