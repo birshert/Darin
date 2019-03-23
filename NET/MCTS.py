@@ -167,7 +167,7 @@ class MCTS:
 
             black = not black
 
-            if black:
+            if not black:
                 if self.check_sequence(5, move, field[0]):
                     if self.black:
                         winner = 1
@@ -184,7 +184,7 @@ class MCTS:
 
         policy, evaluation = self.get_pv(field)
 
-        if not black:
+        if black:
             evaluation = evaluation[1] - evaluation[0]
         else:
             evaluation = evaluation[0] - evaluation[1]
