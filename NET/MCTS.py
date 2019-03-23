@@ -7,40 +7,6 @@ import torch.nn.functional as F
 import time
 
 
-class KEYS:
-    def __init__(self, elems=None):
-        if elems is None:
-            self.set1 = list()
-            self.set2 = list()
-        else:
-            self.set1 = elems[0]
-            self.set2 = elems[1]
-            self.set = [self.set1, self.set2]
-        self.normalize()
-
-    def __len__(self):
-        return len(self.set)
-
-    def add(self, elem, pos):
-        self.set[pos].append(elem)
-        self.normalize()
-
-    def normalize(self):
-        self.set1 = sorted(set(self.set1))
-        self.set2 = sorted(set(self.set2))
-        self.set = [self.set1, self.set2]
-
-    def __str__(self):
-        return str(self.set)
-
-    def remove(self, elem, pos):
-        self.set[pos].remove(elem)
-        self.normalize()
-
-    def empty(self):
-        return not (len(self.set1) or len(self.set2))
-
-
 class MCTS:
     def __init__(self, number, time):
         self.iterations_time = time
@@ -68,7 +34,6 @@ class MCTS:
         self.model.eval()
 
         self.model2 = VNet()
-        # self.model2 = torch.nn.DataParallel(self.model2)
         self.model2.load_state_dict(
             torch.load("model_v{}.pth".format(number), map_location=lambda storage, loc: storage))
         self.model2.eval()
@@ -110,21 +75,14 @@ class MCTS:
 
         possible = deepcopy(field.free)
 
-        # move = policy.argmax()
-
-        # while move not in possible:
-        #     policy[move] = 0
-        #     move = policy.argmax()
-        # return move // 15, move % 15
-
         node = [0 for _ in range(225)]
 
-        root = str(KEYS())
+        root = self.normalize([set(), set()])
 
         data = {root: [policy, deepcopy(node), deepcopy(node)]}
 
         start = time.clock()
-        eps = 0.2
+        eps = 0.3
         while time.clock() - start + eps < self.iterations_time:
             if len(possible) != 0:
                 data = self.tree_search(data, deepcopy(possible), input_)
@@ -141,6 +99,10 @@ class MCTS:
             self.t = 0.1
 
         return move // 15, move % 15
+
+    @staticmethod
+    def normalize(key):
+        return str(sorted(key[0])) + str(sorted(key[1]))
 
     @staticmethod
     def update_field(field, move):
@@ -172,16 +134,16 @@ class MCTS:
         return field
 
     def tree_search(self, data, possible, field):
-        black = self.black
-        moves = KEYS()
+        black = deepcopy(self.black)
+        moves = [set(), set()]
         made_moves = []
         winner = 0
 
-        while str(moves) in data.keys():
+        while self.normalize(moves) in data.keys():
             if len(possible) == 0:
                 break
 
-            current = str(moves)
+            current = self.normalize(moves)
             policy = data[current][0]
             n_s = data[current][1]
             q = np.array(data[current][2])
@@ -190,16 +152,16 @@ class MCTS:
 
             u = np.array([policy[i] * c / (n_s[i] + 1) for i in range(15 * 15)])
 
-            choosing = 3 * u + q
+            choosing = u + q
 
             move = choosing.argmax()
 
             while move not in possible:
-                choosing[move] -= max(choosing)
+                choosing[move] -= 100
                 move = choosing.argmax()
 
             possible.remove(move)
-            moves.add(move, black)
+            moves[black].add(move)
             made_moves.append(move)
             field = self.update_field(deepcopy(field), move)
 
@@ -222,7 +184,7 @@ class MCTS:
 
         policy, evaluation = self.get_pv(field)
 
-        if black:
+        if not black:
             evaluation = evaluation[1] - evaluation[0]
         else:
             evaluation = evaluation[0] - evaluation[1]
@@ -231,14 +193,14 @@ class MCTS:
             evaluation = winner
 
         node = [0 for _ in range(225)]
-        data[str(moves)] = [deepcopy(policy), deepcopy(node), deepcopy(node)]
+        data[self.normalize(moves)] = [deepcopy(policy), deepcopy(node), deepcopy(node)]
 
         made_moves.reverse()
 
         for move in made_moves:
             black = not black
-            moves.remove(move, black)
-            current = str(moves)
+            moves[black].remove(move)
+            current = self.normalize(moves)
             n_s = data[current][1]
             q = data[current][2]
             n_s[move] += 1

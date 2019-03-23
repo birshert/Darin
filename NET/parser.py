@@ -35,7 +35,7 @@ def random_shift(data):
         max_x = max(max_x, x)
         max_y = max(max_y, y)
 
-    return np.random.choice(np.arange(-min_x, 15 - max_x)), np.random.choice(np.arange(- min_y, 15 - max_y))
+    return [np.random.choice(np.arange(-min_x, 15 - max_x)), np.random.choice(np.arange(- min_y, 15 - max_y))], (0, 0)
 
 
 def parse(count1, count2):
@@ -74,75 +74,77 @@ def parse(count1, count2):
             break
 
         data = line.split()
-        shift_x, shift_y = random_shift(data)
-        black_field = deepcopy(empty_field)
-        white_field = deepcopy(empty_field)
-        past1_white = deepcopy(empty_field)
-        past1_black = deepcopy(empty_field)
-        past2_white = deepcopy(empty_field)
-        past2_black = deepcopy(empty_field)
-        past3_black = deepcopy(empty_field)
-        past3_white = deepcopy(empty_field)
-        past4_black = deepcopy(empty_field)
-        past4_white = deepcopy(empty_field)
+        shifts = random_shift(data)
+        for shift in shifts:
+            shift_x, shift_y = shift
+            black_field = deepcopy(empty_field)
+            white_field = deepcopy(empty_field)
+            past1_white = deepcopy(empty_field)
+            past1_black = deepcopy(empty_field)
+            past2_white = deepcopy(empty_field)
+            past2_black = deepcopy(empty_field)
+            past3_black = deepcopy(empty_field)
+            past3_white = deepcopy(empty_field)
+            past4_black = deepcopy(empty_field)
+            past4_white = deepcopy(empty_field)
 
-        if data[0] != 'draw':
-            black = False
-            for i in range(0, len(data) - 1):
-                if i > 4:
-                    past4_black = deepcopy(past3_black)
-                    past4_white = deepcopy(past3_white)
-                if i > 3:
-                    past3_black = deepcopy(past2_black)
-                    past3_white = deepcopy(past2_white)
+            if data[0] != 'draw':
+                black = False
+                for i in range(0, len(data) - 1):
+                    if i > 4:
+                        past4_black = deepcopy(past3_black)
+                        past4_white = deepcopy(past3_white)
+                    if i > 3:
+                        past3_black = deepcopy(past2_black)
+                        past3_white = deepcopy(past2_white)
 
-                if i > 2:
-                    past2_white = deepcopy(past1_white)
-                    past2_black = deepcopy(past1_black)
+                    if i > 2:
+                        past2_white = deepcopy(past1_white)
+                        past2_black = deepcopy(past1_black)
 
-                if i > 1:
-                    past1_white = deepcopy(white_field)
-                    past1_black = deepcopy(black_field)
+                    if i > 1:
+                        past1_white = deepcopy(white_field)
+                        past1_black = deepcopy(black_field)
 
-                if i > 0:
-                    move = [change[data[i][0]] - 1 + shift_x, int(data[i][1]) - 1 + shift_y]
-                    if black:
-                        black_field[move[0]][move[1]] = 1.0
+                    if i > 0:
+                        move = [change[data[i][0]] - 1 + shift_x, int(data[i][1]) - 1 + shift_y]
+                        if black:
+                            black_field[move[0]][move[1]] = 1.0
+                        else:
+                            white_field[move[0]][move[1]] = 1.0
+
+                    if not black:
+                        if data[0] == 'black':
+                            data_x1.append(deepcopy(
+                                np.stack(
+                                    (black_field, white_field, past1_black, past1_white, past2_black,
+                                     past2_white, past3_black, past3_white, black_turn))))
+                            next_move = [change[data[i + 1][0]] - 1, int(data[i + 1][1]) - 1]
+
+                            data_y1.append(deepcopy(((next_move[0] + shift_x) * 15 + next_move[1] + shift_y)))
                     else:
-                        white_field[move[0]][move[1]] = 1.0
+                        if data[0] == 'white':
+                            data_x1.append(deepcopy(
+                                np.stack(
+                                    (black_field, white_field, past1_black, past1_white, past2_black,
+                                     past2_white, past3_black, past3_white, white_turn))))
+                            next_move = [change[data[i + 1][0]] - 1, int(data[i + 1][1]) - 1]
 
-                if not black:
-                    if data[0] == 'black':
-                        data_x1.append(deepcopy(
-                            np.stack(
-                                (black_field, white_field, past1_black, past1_white, past2_black,
-                                 past2_white, past3_black, past3_white, black_turn))))
-                        next_move = [change[data[i + 1][0]] - 1, int(data[i + 1][1]) - 1]
+                            data_y1.append(deepcopy((next_move[0] + shift_x) * 15 + next_move[1] + shift_y))
 
-                        data_y1.append(deepcopy(((next_move[0] + shift_x) * 15 + next_move[1] + shift_y)))
-                else:
-                    if data[0] == 'white':
-                        data_x1.append(deepcopy(
-                            np.stack(
-                                (black_field, white_field, past1_black, past1_white, past2_black,
-                                 past2_white, past3_black, past3_white, white_turn))))
-                        next_move = [change[data[i + 1][0]] - 1, int(data[i + 1][1]) - 1]
+                    if not black:
+                        data_x2.append(deepcopy(np.stack((black_field, white_field, past1_black, past1_white, past2_black,
+                                                          past2_white, past3_black, past3_white, past4_black, past4_white,
+                                                          black_turn))))
+                    else:
+                        data_x2.append(deepcopy(np.stack((black_field, white_field, past1_black, past1_white, past2_black,
+                                                          past2_white, past3_black, past3_white, past4_black, past4_white,
+                                                          white_turn))))
 
-                        data_y1.append(deepcopy((next_move[0] + shift_x) * 15 + next_move[1] + shift_y))
+                    v = 1 * (data[0] == 'black') + 0
 
-                if not black:
-                    data_x2.append(deepcopy(np.stack((black_field, white_field, past1_black, past1_white, past2_black,
-                                                      past2_white, past3_black, past3_white, past4_black, past4_white,
-                                                      black_turn))))
-                else:
-                    data_x2.append(deepcopy(np.stack((black_field, white_field, past1_black, past1_white, past2_black,
-                                                      past2_white, past3_black, past3_white, past4_black, past4_white,
-                                                      white_turn))))
-
-                v = 1 * (data[0] == 'black') + 0
-
-                data_y2.append(deepcopy(v))
-                black = not black
+                    data_y2.append(deepcopy(v))
+                    black = not black
 
     x1 = torch.stack([torch.from_numpy(i).type(torch.FloatTensor) for i in data_x1])
     y1 = torch.stack([torch.tensor(i).type(torch.LongTensor) for i in data_y1])
