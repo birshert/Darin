@@ -332,7 +332,7 @@ class MCTS:
 
             black = not black
 
-            if black:
+            if not black:
                 if self.check_sequence(5, move, field[0]):
                     if self.black:
                         winner = 1
