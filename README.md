@@ -12,10 +12,10 @@ The project is held from november 2018 till march 2019.
 
 ## Install my game
 
-```python
+```bash
 sudo apt install git
 sudo apt install python3-pip
 pip3 install torch, numpy, pygame
-git clone https://github.com/birshert/Darin.git
+git clone https://github.com/birshert/Darin
 cd Darin/GAME/
 python3 game.py```
