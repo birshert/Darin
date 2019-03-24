@@ -20,3 +20,9 @@ git clone https://github.com/birshert/Darin
 cd Darin/GAME/
 python3 game.py
 ```
+---
+![](https://github.com/birshert/Darin/blob/master/GAME/Game%20at%20start.png)
+
+---
+
+![](https://github.com/birshert/Darin/blob/master/GAME/Game%20in%20process.png)
