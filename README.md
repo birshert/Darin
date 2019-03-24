@@ -18,4 +18,5 @@ sudo apt install python3-pip
 pip3 install torch, numpy, pygame
 git clone https://github.com/birshert/Darin
 cd Darin/GAME/
-python3 game.py```
+python3 game.py
+```
