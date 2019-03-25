@@ -12,7 +12,7 @@ The project is held from november 2018 till march 2019.
 
 ## Install my game
 
-I use ```python 3.6``` and some libs: ```numpy, torch, pygame```. You don't have to worry about it, their installation is in code below.
+I use ```python 3.6``` and some libs: ```numpy 1.16.2, torch 1.0, pygame 1.9.4```. You don't have to worry about it, their installation is in code below.
 
 ```bash
 sudo apt install git
