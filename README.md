@@ -8,6 +8,13 @@ The main goal is to train a neural net using reinforcement learning, the net sho
 
 The project is held from november 2018 till march 2019.
 
+### Folders info:
+  1. GAME - folder with ready to play python file with two pytorch models
+  1. JOUST - folder for competition
+  1. KaggleFight - folder for winter kaggle contest in ML chinese characters classification
+  1. NET - the main coursework for the project, more details inside
+  1. labs_ - some labs I've done through project
+
 ---
 
 ## Install my game
