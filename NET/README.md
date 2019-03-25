@@ -5,14 +5,6 @@
 Starting combining together knowledge and power to create the wonderfull one
 
 
-![](https://github.com/birshert/Darin/blob/master/NET/sample1.png)
-
----
-
-![](https://github.com/birshert/Darin/blob/master/NET/sample2.png)
-
-
-
 ---
 
 MCTS.py - дерево Монте-Карло
@@ -23,12 +15,12 @@ Train.py - тренировать обе нейросети
 
 Train_p.py - тренировать policy
 
-parser.py - датасеты
+parser.py - сборка датасетов
 
 Field.py - классы для клеток и поля
 
-Players.py - классы игроков
+Players.py - классы игроков (Человек, Компьютер и Рандомный игроки)
 
-Vыsualistaion.py - визуализация
+Vыsualistaion.py - визуализация (графическая оболочка на pygame)
 
-main.py - собирает все детали воедино, запускает визуализацию
+main.py - собирает все детали воедино, проводится игра с визуализацией
